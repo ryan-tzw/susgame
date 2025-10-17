@@ -5,6 +5,7 @@ import { Trash } from '../entities/Trash'
 import { DropoffBox } from '../entities/DropoffBox'
 import { SpawnManager } from '../managers/SpawnManager'
 import { TilemapManager } from '../managers/TilemapManager'
+import { InputManager, GameAction } from '../managers/InputManager'
 
 export class GameScene extends Phaser.Scene {
     private player!: Player
@@ -12,14 +13,13 @@ export class GameScene extends Phaser.Scene {
     private hearts: Phaser.GameObjects.Image[] = []
     private bins: Bin[] = []
     private carriedBin: Bin | null = null
-    private spaceKey!: Phaser.Input.Keyboard.Key
-    private eKey!: Phaser.Input.Keyboard.Key
     private nearbyTrash: Trash | null = null
     private dropoffBoxes: DropoffBox[] = []
     private drainTimer = 0
     private drainInterval = 60 // Frames between draining items (60 = 1 second at 60fps)
     private spawnManager!: SpawnManager
     private tilemapManager!: TilemapManager
+    private inputManager!: InputManager
 
     constructor() {
         super({ key: 'GameScene' })
@@ -72,15 +72,18 @@ export class GameScene extends Phaser.Scene {
         this.cameras.main.setZoom(1)
         this.cameras.main.setRoundPixels(false)
 
-        // Set up space key for interactions
-        if (this.input.keyboard) {
-            this.spaceKey = this.input.keyboard.addKey(
-                Phaser.Input.Keyboard.KeyCodes.SPACE
-            )
-            this.eKey = this.input.keyboard.addKey(
-                Phaser.Input.Keyboard.KeyCodes.E
-            )
-        }
+        // Set up input manager and subscribe to actions
+        this.inputManager = new InputManager(this)
+        this.inputManager.on(
+            GameAction.INTERACT,
+            this.handleBinInteraction,
+            this
+        )
+        this.inputManager.on(
+            GameAction.COLLECT,
+            this.handleTrashCollection,
+            this
+        )
 
         // Initialize spawn manager with terrain layer for spawn validation
         this.spawnManager = new SpawnManager(
@@ -193,15 +196,8 @@ export class GameScene extends Phaser.Scene {
         // Check for bin draining at dropoff boxes
         this.checkBinDraining()
 
-        // Handle bin pickup/drop with SPACE key
-        if (Phaser.Input.Keyboard.JustDown(this.spaceKey)) {
-            this.handleBinInteraction()
-        }
-
-        // Handle trash collection with E key
-        if (Phaser.Input.Keyboard.JustDown(this.eKey)) {
-            this.handleTrashCollection()
-        }
+        // Update input manager (checks keys and emits events)
+        this.inputManager.update()
     }
 
     private checkBinDraining(): void {
