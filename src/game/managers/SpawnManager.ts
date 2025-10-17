@@ -217,7 +217,7 @@ export class SpawnManager {
     ): Bin[] {
         const bins: Bin[] = []
         const binStartX = GameConstants.BIN.SPAWN.START_X
-        const binStartY = this.worldHeight / 2 - 200
+        const binStartY = GameConstants.BIN.SPAWN.START_Y
         const binSpacing = GameConstants.BIN.SPAWN.SPACING_Y
 
         const binTypes: BinType[] = ['green', 'blue', 'yellow']

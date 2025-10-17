@@ -45,7 +45,8 @@ export const GameConstants = {
         },
         /** Spawn positions */
         SPAWN: {
-            START_X: 300,
+            START_X: 700,
+            START_Y: 1000,
             SPACING_Y: 150,
         },
         /** Bin type colors for capacity meter */
