@@ -6,6 +6,7 @@ export class Bin extends Phaser.Physics.Arcade.Sprite {
     public binType: BinType
     public isPickedUp = false
     private player: Phaser.Physics.Arcade.Sprite | null = null
+    private playerContainer: Phaser.GameObjects.Container | null = null
     public itemCount = 0
     public maxCapacity = 10
     public isDraining = false
@@ -82,7 +83,10 @@ export class Bin extends Phaser.Physics.Arcade.Sprite {
         this.capacityMeter.setVisible(this.itemCount > 0)
     }
 
-    public pickUp(player: Phaser.Physics.Arcade.Sprite): void {
+    public pickUp(
+        player: Phaser.Physics.Arcade.Sprite,
+        container: Phaser.GameObjects.Container
+    ): void {
         this.isPickedUp = true
         this.player = player
 
@@ -91,36 +95,57 @@ export class Bin extends Phaser.Physics.Arcade.Sprite {
             this.body.enable = false
         }
 
-        // Increase depth to appear above player
-        this.setDepth(1001)
+        // Remove from scene and add to container at relative position
+        const yOffset = -70 // Position above player (player is at 0,0 in container)
+        this.setPosition(0, yOffset)
+        container.add(this)
+
+        // Add capacity meter to container as well
+        if (this.capacityMeter) {
+            container.add(this.capacityMeter)
+        }
+
+        // Increase depth to appear above player (within container)
+        this.setDepth(1)
     }
 
-    public drop(x: number, y: number): void {
+    public drop(
+        container: Phaser.GameObjects.Container,
+        worldX: number,
+        worldY: number
+    ): void {
         this.isPickedUp = false
         // Don't set player to null - we need it for depth sorting!
+
+        // Remove from container and add back to scene
+        container.remove(this)
+        this.scene.add.existing(this)
+
+        // Remove capacity meter from container and add back to scene
+        if (this.capacityMeter) {
+            container.remove(this.capacityMeter)
+        }
 
         // Re-enable physics
         if (this.body) {
             this.body.enable = true
         }
 
-        // Set position where dropped
-        this.setPosition(x, y)
+        // Set position where dropped (in world coordinates)
+        this.setPosition(worldX, worldY)
 
         // Reset depth (will be updated by depth sorting logic)
         this.setDepth(10)
     }
 
     update(): void {
-        // If picked up, follow player and position on their head
-        if (this.isPickedUp && this.player) {
-            const yOffset = -70 // Position above player's head (adjust as needed)
-            this.setPosition(this.player.x, this.player.y + yOffset)
-        } else if (this.player) {
-            // Update depth based on player position for depth illusion
-            // If player is below the bin (player.y > bin.y), bin should be behind (lower depth)
-            // If player is above the bin (player.y < bin.y), bin should be in front (higher depth)
-            if (this.player.y > this.y) {
+        // Position is now handled by container when picked up, no need to update
+        // Just handle depth sorting when not picked up
+        if (!this.isPickedUp && this.playerContainer) {
+            // Update depth based on player container position for depth illusion
+            // If player is below the bin, bin should be behind (lower depth)
+            // If player is above the bin, bin should be in front (higher depth)
+            if (this.playerContainer.y > this.y) {
                 // Player is below bin, so bin should be painted first (lower depth)
                 this.setDepth(5)
             } else {
@@ -133,8 +158,12 @@ export class Bin extends Phaser.Physics.Arcade.Sprite {
         this.updateCapacityMeter()
     }
 
-    public setPlayer(player: Phaser.Physics.Arcade.Sprite): void {
+    public setPlayer(
+        player: Phaser.Physics.Arcade.Sprite,
+        container: Phaser.GameObjects.Container
+    ): void {
         this.player = player
+        this.playerContainer = container
     }
 
     public addItem(): boolean {

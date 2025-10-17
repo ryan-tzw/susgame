@@ -15,19 +15,17 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
     public maxHp = 5
     public isCarryingBin = false
     public currentBinType: string | null = null
+    private container: Phaser.GameObjects.Container | null = null
 
     constructor(scene: Phaser.Scene, x: number, y: number) {
         super(scene, x, y, 'player', 'player_0.png')
 
         // Add to scene
         scene.add.existing(this)
-        scene.physics.add.existing(this)
+        // Note: We don't add physics anymore since the player is just a sprite in a container
 
-        // Set up physics
-        this.setCollideWorldBounds(true)
-
-        // Set player depth
-        this.setDepth(10)
+        // Set player depth (within container, 0 is base)
+        this.setDepth(0)
 
         // Set up input
         this.cursors = scene.input.keyboard?.createCursorKeys() || null
@@ -85,49 +83,58 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
         }
     }
 
+    public setContainer(container: Phaser.GameObjects.Container): void {
+        this.container = container
+    }
+
     update(): void {
-        if (!this.cursors) return
+        if (!this.cursors || !this.container) return
 
         // Check if sprinting
         const isSprinting = this.shiftKey?.isDown || false
         const currentSpeed = isSprinting ? this.sprintSpeed : this.speed
 
-        // Reset velocity
-        this.setVelocity(0, 0)
-
+        // Calculate movement delta
+        let velocityX = 0
+        let velocityY = 0
         let isMoving = false
 
         // Horizontal movement (Arrow keys + WASD)
         if (this.cursors.left?.isDown || this.wasdKeys?.A.isDown) {
-            this.setVelocityX(-currentSpeed)
+            velocityX = -currentSpeed
             isMoving = true
             this.setFlipX(false) // Sprite is facing left by default, so no flip
         } else if (this.cursors.right?.isDown || this.wasdKeys?.D.isDown) {
-            this.setVelocityX(currentSpeed)
+            velocityX = currentSpeed
             isMoving = true
             this.setFlipX(true) // Flip to face right
         }
 
         // Vertical movement (Arrow keys + WASD)
         if (this.cursors.up?.isDown || this.wasdKeys?.W.isDown) {
-            this.setVelocityY(-currentSpeed)
+            velocityY = -currentSpeed
             isMoving = true
         } else if (this.cursors.down?.isDown || this.wasdKeys?.S.isDown) {
-            this.setVelocityY(currentSpeed)
+            velocityY = currentSpeed
             isMoving = true
         }
 
         // Normalize diagonal movement
-        if (
-            this.body &&
-            this.body.velocity.x !== 0 &&
-            this.body.velocity.y !== 0
-        ) {
-            this.setVelocity(
-                this.body.velocity.x * Math.sqrt(0.5),
-                this.body.velocity.y * Math.sqrt(0.5)
-            )
+        if (velocityX !== 0 && velocityY !== 0) {
+            velocityX *= Math.sqrt(0.5)
+            velocityY *= Math.sqrt(0.5)
         }
+
+        // Move the container
+        const delta = this.scene.game.loop.delta / 1000 // Convert to seconds
+        this.container.x += velocityX * delta
+        this.container.y += velocityY * delta
+
+        // Keep container within world bounds
+        const worldWidth = 3840
+        const worldHeight = 2160
+        this.container.x = Phaser.Math.Clamp(this.container.x, 0, worldWidth)
+        this.container.y = Phaser.Math.Clamp(this.container.y, 0, worldHeight)
 
         // Play appropriate animation
         if (isMoving) {

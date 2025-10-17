@@ -7,6 +7,7 @@ import { DropoffBox } from '../entities/DropoffBox'
 
 export class GameScene extends Phaser.Scene {
     private player!: Player
+    private playerContainer!: Phaser.GameObjects.Container
     private hearts: Phaser.GameObjects.Image[] = []
     private bins: Bin[] = []
     private carriedBin: Bin | null = null
@@ -93,13 +94,24 @@ export class GameScene extends Phaser.Scene {
         this.physics.world.setBounds(0, 0, worldWidth, worldHeight)
 
         // Create player at center of world
-        this.player = new Player(this, worldWidth / 2, worldHeight / 2)
+        this.player = new Player(this, 0, 0) // Position at 0,0 relative to container
 
-        // Set up camera to follow player
-        this.cameras.main.startFollow(this.player)
+        // Create player container and add player to it
+        this.playerContainer = this.add.container(
+            worldWidth / 2,
+            worldHeight / 2
+        )
+        this.playerContainer.setDepth(10) // Player layer depth
+        this.playerContainer.add(this.player)
+
+        // Give player reference to its container so it can move it
+        this.player.setContainer(this.playerContainer)
+
+        // Set up camera to follow the container instead
+        this.cameras.main.startFollow(this.playerContainer)
         this.cameras.main.setBounds(0, 0, worldWidth, worldHeight)
         this.cameras.main.setZoom(1)
-        this.cameras.roundPixels = false
+        this.cameras.main.setRoundPixels(false)
 
         // Set up space key for interactions
         if (this.input.keyboard) {
@@ -128,7 +140,9 @@ export class GameScene extends Phaser.Scene {
         this.bins.push(greenBin, blueBin, yellowBin)
 
         // Set player reference for depth sorting
-        this.bins.forEach((bin) => bin.setPlayer(this.player))
+        this.bins.forEach((bin) =>
+            bin.setPlayer(this.player, this.playerContainer)
+        )
 
         // Create dropoff boxes (right side of world)
         const dropoffStartX = worldWidth - 400
@@ -228,30 +242,27 @@ export class GameScene extends Phaser.Scene {
     }
 
     private createHearts(): void {
-        // Create 5 hearts
+        // Create 5 hearts and add them to the player container
+        const heartSpacing = 30
+        const totalWidth = (5 - 1) * heartSpacing
+        const startX = -totalWidth / 2
+        const yOffset = 80 // Position below player (relative to player at 0,0)
+
         for (let i = 0; i < 5; i++) {
             const heart = this.add
-                .image(0, 0, 'heart_filled')
-                .setDepth(1000)
-                .setScale(0.75) // Scale down if needed, adjust based on your heart sprite size
+                .image(startX + i * heartSpacing, yOffset, 'heart_filled')
+                .setDepth(-1) // Behind player within container
+                .setScale(0.75)
             this.hearts.push(heart)
+            this.playerContainer.add(heart)
         }
     }
 
     private updateHearts(): void {
-        // Position hearts below the player
-        const heartSpacing = 30 // Adjust based on your heart sprite size
-        const totalWidth = (this.hearts.length - 1) * heartSpacing
-        const startX = this.player.x - totalWidth / 2
-        const yOffset = 80 // Position below player
-
-        // Update each heart
+        // Update heart textures based on current HP
+        // Position is now handled by the container, so we only update textures
         for (let i = 0; i < this.hearts.length; i++) {
             const heart = this.hearts[i]
-            heart.setPosition(
-                startX + i * heartSpacing,
-                this.player.y + yOffset
-            )
 
             // Show filled or empty heart based on current HP
             const textureKey =
@@ -268,10 +279,10 @@ export class GameScene extends Phaser.Scene {
     }
 
     update(): void {
-        // Update player
+        // Update player (handles input and moves container)
         this.player.update()
 
-        // Update heart display to follow player
+        // Update heart display textures (position handled by container)
         this.updateHearts()
 
         // Update bins
@@ -341,13 +352,13 @@ export class GameScene extends Phaser.Scene {
         let closestTrash: Trash | null = null
         let closestDistance = Infinity
 
-        // Find the closest trash within range
+        // Find the closest trash within range (use container position)
         for (const trash of this.trashItems) {
             if (trash.isCollected) continue
 
             const distance = Phaser.Math.Distance.Between(
-                this.player.x,
-                this.player.y,
+                this.playerContainer.x,
+                this.playerContainer.y,
                 trash.x,
                 trash.y
             )
@@ -420,8 +431,12 @@ export class GameScene extends Phaser.Scene {
 
     private handleBinInteraction(): void {
         if (this.carriedBin) {
-            // Drop the bin at player's current position
-            this.carriedBin.drop(this.player.x, this.player.y)
+            // Drop the bin at player's current position (use container position as world position)
+            this.carriedBin.drop(
+                this.playerContainer,
+                this.playerContainer.x,
+                this.playerContainer.y
+            )
             this.player.dropBin()
             this.carriedBin = null
         } else {
@@ -429,17 +444,17 @@ export class GameScene extends Phaser.Scene {
             for (const bin of this.bins) {
                 if (bin.isPickedUp) continue
 
-                // Check if player is close enough to the bin
+                // Check if player is close enough to the bin (use container position)
                 const distance = Phaser.Math.Distance.Between(
-                    this.player.x,
-                    this.player.y,
+                    this.playerContainer.x,
+                    this.playerContainer.y,
                     bin.x,
                     bin.y
                 )
 
                 if (distance < 80) {
                     // Pick up the bin
-                    bin.pickUp(this.player)
+                    bin.pickUp(this.player, this.playerContainer)
                     this.player.pickUpBin(bin.binType)
                     this.carriedBin = bin
                     break

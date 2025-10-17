@@ -32,7 +32,7 @@ export class DropoffBox extends Phaser.GameObjects.Rectangle {
         this.setDepth(1)
 
         // Add decoration image next to the box
-        const decorationOffset = 150
+        const decorationOffset = 250
         this.decorationImage = scene.add
             .image(x + decorationOffset, y, decorationImageKey)
             .setDepth(5)
