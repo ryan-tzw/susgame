@@ -1,4 +1,5 @@
 import Phaser from 'phaser'
+import { PreloadScene } from '../scenes/PreloadScene'
 import { GameScene } from '../scenes/GameScene'
 
 export const gameConfig: Phaser.Types.Core.GameConfig = {
@@ -14,7 +15,7 @@ export const gameConfig: Phaser.Types.Core.GameConfig = {
             debug: false,
         },
     },
-    scene: [GameScene],
+    scene: [PreloadScene, GameScene],
     scale: {
         mode: Phaser.Scale.FIT,
         autoCenter: Phaser.Scale.CENTER_BOTH,

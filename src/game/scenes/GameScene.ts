@@ -2,7 +2,7 @@ import Phaser from 'phaser'
 import { Player } from '../entities/Player'
 import { Bin } from '../entities/Bin'
 import { Trash } from '../entities/Trash'
-import { TrashLoader, TrashAsset } from '../utils/TrashLoader'
+import { TrashAsset } from '../utils/TrashLoader'
 import { DropoffBox } from '../entities/DropoffBox'
 
 export class GameScene extends Phaser.Scene {
@@ -24,70 +24,9 @@ export class GameScene extends Phaser.Scene {
         super({ key: 'GameScene' })
     }
 
-    preload(): void {
-        // Load player atlas
-        this.load.atlas(
-            'player',
-            'assets/sprites/player.png',
-            'assets/sprites/player.json'
-        )
-
-        // Load heart sprites
-        this.load.image('heart_filled', 'assets/sprites/heart_filled.png')
-        this.load.image('heart_empty', 'assets/sprites/heart_empty.png')
-
-        // Load arrow indicator
-        this.load.image('arrow', 'assets/sprites/arrow.png')
-
-        // Load bin sprites
-        this.load.image('green_bin', 'assets/sprites/green_bin.png')
-        this.load.image('blue_bin', 'assets/sprites/blue_bin.png')
-        this.load.image('yellow_bin', 'assets/sprites/yellow_bin.png')
-
-        // Load trash sprites from organized folders
-        this.loadTrashSprites()
-
-        // Load dropoff decoration images
-        // Place these PNGs in public/assets/sprites/
-        this.load.image('waste_to_energy', 'assets/sprites/waste_to_energy.png')
-        this.load.image('recycling_plant', 'assets/sprites/recycling_plant.png')
-        this.load.image('donation_center', 'assets/sprites/donation_center.png')
-    }
-
-    private loadTrashSprites(): void {
-        // TEMPORARY: Manually list your trash files here
-        // Replace these arrays with your actual PNG filenames (without path)
-        const greenTrashFiles: string[] = [
-            // Example: 'banana.png', 'apple_core.png', 'food_waste.png'
-        ]
-
-        const blueTrashFiles: string[] = [
-            'cardboard_box.png',
-            'coke_can.png',
-            'plastic_bottle.png',
-            'milk_carton.png',
-            'takeaway_box.png',
-            'plastic_bag.png',
-        ]
-
-        const yellowTrashFiles: string[] = [
-            'shirt.png',
-            'pants.png',
-            'shoe.png',
-        ]
-
-        // Generate asset list from filenames
-        this.trashAssets = TrashLoader.generateFromFiles(
-            greenTrashFiles,
-            blueTrashFiles,
-            yellowTrashFiles
-        )
-
-        // Load all trash sprites
-        TrashLoader.loadTrashSprites(this, this.trashAssets)
-    }
-
     create(): void {
+        // Get trash assets from registry (loaded in PreloadScene)
+        this.trashAssets = this.registry.get('trashAssets') || []
         // Set up larger world bounds
         const worldWidth = 3840 // 2x camera width
         const worldHeight = 2160 // 2x camera height
