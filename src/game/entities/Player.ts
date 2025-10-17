@@ -2,7 +2,13 @@ import Phaser from 'phaser'
 
 export class Player extends Phaser.Physics.Arcade.Sprite {
     private cursors: Phaser.Types.Input.Keyboard.CursorKeys | null = null
-    private speed = 160
+    private wasdKeys: {
+        W: Phaser.Input.Keyboard.Key
+        A: Phaser.Input.Keyboard.Key
+        S: Phaser.Input.Keyboard.Key
+        D: Phaser.Input.Keyboard.Key
+    } | null = null
+    private speed = 300
     public hp = 5
     public maxHp = 5
     public isCarryingBin = false
@@ -18,8 +24,29 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
         // Set up physics
         this.setCollideWorldBounds(true)
 
+        // Set player depth
+        this.setDepth(10)
+
         // Set up input
         this.cursors = scene.input.keyboard?.createCursorKeys() || null
+
+        // Set up WASD keys
+        if (scene.input.keyboard) {
+            this.wasdKeys = {
+                W: scene.input.keyboard.addKey(
+                    Phaser.Input.Keyboard.KeyCodes.W
+                ),
+                A: scene.input.keyboard.addKey(
+                    Phaser.Input.Keyboard.KeyCodes.A
+                ),
+                S: scene.input.keyboard.addKey(
+                    Phaser.Input.Keyboard.KeyCodes.S
+                ),
+                D: scene.input.keyboard.addKey(
+                    Phaser.Input.Keyboard.KeyCodes.D
+                ),
+            }
+        }
 
         // Create animations
         this.createAnimations()
@@ -38,7 +65,7 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
                     { key: 'player', frame: 'player_0.png' },
                     { key: 'player', frame: 'player_2.png' },
                 ],
-                frameRate: 4,
+                frameRate: 6,
                 repeat: -1,
             })
         }
@@ -61,22 +88,22 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
 
         let isMoving = false
 
-        // Horizontal movement
-        if (this.cursors.left?.isDown) {
+        // Horizontal movement (Arrow keys + WASD)
+        if (this.cursors.left?.isDown || this.wasdKeys?.A.isDown) {
             this.setVelocityX(-this.speed)
             isMoving = true
             this.setFlipX(false) // Sprite is facing left by default, so no flip
-        } else if (this.cursors.right?.isDown) {
+        } else if (this.cursors.right?.isDown || this.wasdKeys?.D.isDown) {
             this.setVelocityX(this.speed)
             isMoving = true
             this.setFlipX(true) // Flip to face right
         }
 
-        // Vertical movement
-        if (this.cursors.up?.isDown) {
+        // Vertical movement (Arrow keys + WASD)
+        if (this.cursors.up?.isDown || this.wasdKeys?.W.isDown) {
             this.setVelocityY(-this.speed)
             isMoving = true
-        } else if (this.cursors.down?.isDown) {
+        } else if (this.cursors.down?.isDown || this.wasdKeys?.S.isDown) {
             this.setVelocityY(this.speed)
             isMoving = true
         }
