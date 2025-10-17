@@ -7,7 +7,7 @@ export const gameConfig: Phaser.Types.Core.GameConfig = {
     width: 1920,
     height: 1080,
     parent: 'game-container',
-    backgroundColor: '#d7f5d3', // Light green background
+    backgroundColor: '#000000', // Black background (tilemap will cover this)
     physics: {
         default: 'arcade',
         arcade: {

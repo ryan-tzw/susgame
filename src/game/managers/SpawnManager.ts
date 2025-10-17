@@ -11,6 +11,7 @@ export class SpawnManager {
     private trashItems: Trash[] = []
     private worldWidth: number
     private worldHeight: number
+    private grassLayer: Phaser.Tilemaps.TilemapLayer | null = null
 
     // Continuous spawning config
     private maxTrashItems = 60 // Maximum trash items on map
@@ -23,12 +24,14 @@ export class SpawnManager {
         scene: Phaser.Scene,
         trashAssets: TrashAsset[],
         worldWidth: number,
-        worldHeight: number
+        worldHeight: number,
+        grassLayer: Phaser.Tilemaps.TilemapLayer | null = null
     ) {
         this.scene = scene
         this.trashAssets = trashAssets
         this.worldWidth = worldWidth
         this.worldHeight = worldHeight
+        this.grassLayer = grassLayer
 
         // Schedule first spawn
         this.scheduleNextSpawn()
@@ -53,6 +56,44 @@ export class SpawnManager {
     }
 
     /**
+     * Check if a position is valid for spawning (on grass tiles with spawn=true)
+     */
+    private isValidSpawnPosition(x: number, y: number): boolean {
+        // If no grass layer, allow spawning anywhere (fallback)
+        if (!this.grassLayer) return true
+
+        // Get the tile at this position
+        const tile = this.grassLayer.getTileAtWorldXY(x, y)
+
+        // If no tile, not a valid position
+        if (!tile) return false
+
+        // Check tile properties - spawn should be true for grass tiles
+        // This way, if you modify your tileset in Tiled, you just need to
+        // ensure the spawn property is set on the appropriate tiles
+        return tile.properties && tile.properties.spawn === true
+    }
+
+    /**
+     * Find a random valid spawn position
+     */
+    private findValidSpawnPosition(
+        maxAttempts = 20
+    ): { x: number; y: number } | null {
+        for (let i = 0; i < maxAttempts; i++) {
+            const x = Phaser.Math.Between(400, this.worldWidth - 400)
+            const y = Phaser.Math.Between(200, this.worldHeight - 200)
+
+            if (this.isValidSpawnPosition(x, y)) {
+                return { x, y }
+            }
+        }
+
+        // If no valid position found after maxAttempts, return null
+        return null
+    }
+
+    /**
      * Spawn a single trash item at a random location
      */
     private spawnSingleTrash(animate = true): Trash | null {
@@ -64,15 +105,18 @@ export class SpawnManager {
                 Phaser.Math.Between(0, this.trashAssets.length - 1)
             ]
 
-        // Random position across world (with padding from edges)
-        const x = Phaser.Math.Between(400, this.worldWidth - 400)
-        const y = Phaser.Math.Between(200, this.worldHeight - 200)
+        // Find a valid spawn position (on grass tiles)
+        const position = this.findValidSpawnPosition()
+        if (!position) {
+            console.warn('Could not find valid spawn position for trash')
+            return null
+        }
 
-        // Create trash item
+        // Create trash item at valid position
         const trash = new Trash(
             this.scene,
-            x,
-            y,
+            position.x,
+            position.y,
             randomAsset.binType,
             randomAsset.key
         )

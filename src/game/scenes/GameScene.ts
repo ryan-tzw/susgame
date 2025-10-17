@@ -4,6 +4,7 @@ import { Bin } from '../entities/Bin'
 import { Trash } from '../entities/Trash'
 import { DropoffBox } from '../entities/DropoffBox'
 import { SpawnManager } from '../managers/SpawnManager'
+import { TilemapManager } from '../managers/TilemapManager'
 
 export class GameScene extends Phaser.Scene {
     private player!: Player
@@ -18,6 +19,7 @@ export class GameScene extends Phaser.Scene {
     private drainTimer = 0
     private drainInterval = 60 // Frames between draining items (60 = 1 second at 60fps)
     private spawnManager!: SpawnManager
+    private tilemapManager!: TilemapManager
 
     constructor() {
         super({ key: 'GameScene' })
@@ -27,9 +29,17 @@ export class GameScene extends Phaser.Scene {
         // Get trash assets from registry (loaded in PreloadScene)
         const trashAssets = this.registry.get('trashAssets') || []
 
-        // Set up larger world bounds
-        const worldWidth = 3840 // 2x camera width
-        const worldHeight = 2160 // 2x camera height
+        // Set up tilemap (handles terrain, collision, spawn zones)
+        this.tilemapManager = new TilemapManager(
+            this,
+            'map',
+            'tileset',
+            'spritesheet'
+        )
+
+        // Get world dimensions from tilemap
+        const { width: worldWidth, height: worldHeight } =
+            this.tilemapManager.getDimensions()
         this.physics.world.setBounds(0, 0, worldWidth, worldHeight)
 
         // Create player at center of world
@@ -45,6 +55,16 @@ export class GameScene extends Phaser.Scene {
 
         // Give player reference to its container so it can move it
         this.player.setContainer(this.playerContainer)
+
+        // Add physics body to container and set up collision with terrain
+        this.physics.add.existing(this.playerContainer)
+        const containerBody = this.playerContainer
+            .body as Phaser.Physics.Arcade.Body
+        if (containerBody) {
+            containerBody.setSize(32, 32) // Adjust collision box size
+            containerBody.setOffset(-16, -16) // Center it
+        }
+        this.tilemapManager.addCollision(this.playerContainer)
 
         // Set up camera to follow the container instead
         this.cameras.main.startFollow(this.playerContainer)
@@ -62,12 +82,13 @@ export class GameScene extends Phaser.Scene {
             )
         }
 
-        // Initialize spawn manager
+        // Initialize spawn manager with terrain layer for spawn validation
         this.spawnManager = new SpawnManager(
             this,
             trashAssets,
             worldWidth,
-            worldHeight
+            worldHeight,
+            this.tilemapManager.getTerrainLayer()
         )
 
         // Spawn bins using spawn manager

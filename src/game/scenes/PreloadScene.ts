@@ -38,6 +38,13 @@ export class PreloadScene extends Phaser.Scene {
         this.load.image('waste_to_energy', 'assets/sprites/waste_to_energy.png')
         this.load.image('recycling_plant', 'assets/sprites/recycling_plant.png')
         this.load.image('donation_center', 'assets/sprites/donation_center.png')
+
+        // Load Tiled map and tileset
+        this.load.image(
+            'spritesheet',
+            'assets/sprites/background/spritesheet.png'
+        )
+        this.load.tilemapTiledJSON('map', 'assets/sprites/background/map.tmj')
     }
 
     create(): void {
