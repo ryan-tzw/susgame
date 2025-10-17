@@ -17,6 +17,7 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
     public isCarryingBin = false
     public currentBinType: string | null = null
     private container: Phaser.GameObjects.Container | null = null
+    private controlsEnabled = true // Flag to enable/disable player controls
 
     constructor(scene: Phaser.Scene, x: number, y: number) {
         super(scene, x, y, 'player', 'player_0.png')
@@ -88,8 +89,30 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
         this.container = container
     }
 
+    /**
+     * Enable or disable player controls
+     */
+    public setControlsEnabled(enabled: boolean): void {
+        this.controlsEnabled = enabled
+        
+        // Stop movement when controls are disabled
+        if (!enabled && this.container?.body) {
+            const containerBody = this.container.body as Phaser.Physics.Arcade.Body
+            containerBody.setVelocity(0, 0)
+            // Show idle animation
+            if (this.anims.currentAnim?.key !== 'player-idle') {
+                this.play('player-idle')
+            }
+        }
+    }
+
     update(): void {
         if (!this.cursors || !this.container) return
+
+        // Don't process input if controls are disabled
+        if (!this.controlsEnabled) {
+            return
+        }
 
         // Check if sprinting
         const isSprinting = this.shiftKey?.isDown || false
@@ -169,5 +192,15 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
         this.isCarryingBin = false
         this.currentBinType = null
         // TODO: Remove visual indicator
+    }
+
+    /**
+     * Reset player state (called when game restarts)
+     */
+    public reset(): void {
+        this.isCarryingBin = false
+        this.currentBinType = null
+        this.hp = this.maxHp
+        this.controlsEnabled = true
     }
 }

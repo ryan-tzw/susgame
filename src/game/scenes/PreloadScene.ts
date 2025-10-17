@@ -115,9 +115,7 @@ export class PreloadScene extends Phaser.Scene {
     private loadTrashSprites(): void {
         // TEMPORARY: Manually list your trash files here
         // Replace these arrays with your actual PNG filenames (without path)
-        const greenTrashFiles: string[] = [
-            // Example: 'banana.png', 'apple_core.png', 'food_waste.png'
-        ]
+        const greenTrashFiles: string[] = ['apple.png']
 
         const blueTrashFiles: string[] = [
             'cardboard_box.png',

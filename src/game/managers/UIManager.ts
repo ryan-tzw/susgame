@@ -144,6 +144,14 @@ export class UIManager {
     }
 
     /**
+     * Set score to a specific value (for debugging)
+     */
+    setScore(value: number): void {
+        this.score = value
+        this.updateScoreDisplay()
+    }
+
+    /**
      * Update score text display
      */
     private updateScoreDisplay(): void {
@@ -245,16 +253,16 @@ export class UIManager {
         const centerX = this.scene.cameras.main.width / 2
         const centerY = this.scene.cameras.main.height / 2
 
-        // Dark overlay
+        // Dark overlay (semi-transparent black)
         const overlay = this.scene.add
             .rectangle(
                 0,
                 0,
                 this.scene.cameras.main.width,
                 this.scene.cameras.main.height,
-                0x000000,
-                0.7
+                0x000000
             )
+            .setAlpha(0.7) // 70% transparent
             .setOrigin(0, 0)
             .setScrollFactor(0)
             .setDepth(1000)

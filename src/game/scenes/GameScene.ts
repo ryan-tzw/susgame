@@ -7,6 +7,7 @@ import { SpawnManager } from '../managers/SpawnManager'
 import { TilemapManager } from '../managers/TilemapManager'
 import { InputManager, GameAction } from '../managers/InputManager'
 import { UIManager } from '../managers/UIManager'
+import { GameStateManager } from '../managers/GameStateManager'
 import { GameConstants } from '../config/GameConstants'
 
 export class GameScene extends Phaser.Scene {
@@ -22,12 +23,16 @@ export class GameScene extends Phaser.Scene {
     private tilemapManager!: TilemapManager
     private inputManager!: InputManager
     private uiManager!: UIManager
+    private stateManager!: GameStateManager
 
     constructor() {
         super({ key: 'GameScene' })
     }
 
     create(): void {
+        // Initialize game state manager
+        this.stateManager = new GameStateManager()
+
         // Get trash assets from registry (loaded in PreloadScene)
         const trashAssets = this.registry.get('trashAssets') || []
 
@@ -124,6 +129,17 @@ export class GameScene extends Phaser.Scene {
 
         // Spawn initial trash items (start with less, more will spawn over time)
         this.spawnManager.spawnInitialTrash(GameConstants.SPAWN.INITIAL_COUNT)
+
+        // DEBUG: Add key to instantly win (press V key for "Victory")
+        const debugWinKey = this.input.keyboard?.addKey(
+            Phaser.Input.Keyboard.KeyCodes.V
+        )
+        if (debugWinKey) {
+            debugWinKey.on('down', () => {
+                console.log('DEBUG: Setting score to win threshold')
+                this.uiManager.setScore(GameConstants.SCORE.WIN_THRESHOLD)
+            })
+        }
     }
 
     update(): void {
@@ -132,6 +148,20 @@ export class GameScene extends Phaser.Scene {
 
         // Update UI (hearts, score, etc.)
         this.uiManager.update()
+
+        // Check for win condition
+        if (
+            this.stateManager.isPlaying() &&
+            this.uiManager.getScore() >= GameConstants.SCORE.WIN_THRESHOLD
+        ) {
+            this.handleWin()
+            return // Stop updating after win
+        }
+
+        // Don't update game logic if game has ended
+        if (!this.stateManager.isPlaying()) {
+            return
+        }
 
         // Update bins
         this.bins.forEach((bin) => bin.update())
@@ -295,17 +325,56 @@ export class GameScene extends Phaser.Scene {
             this.uiManager.showNotification('Wrong bin! -1 HP', 2000, '#ff0000')
 
             // Check for game over
-            if (this.player.hp <= 0) {
+            if (this.stateManager.isPlaying() && this.player.hp <= 0) {
                 this.handleGameOver()
             }
         }
     }
 
     private handleGameOver(): void {
-        // Show game over overlay with restart option
-        this.uiManager.showGameOver(() => {
-            this.scene.restart()
-        })
+        // Only show game over if we successfully transition to that state
+        if (this.stateManager.setGameOver()) {
+            // Disable player controls
+            this.player.setControlsEnabled(false)
+            
+            // Drop any carried bin
+            if (this.carriedBin) {
+                this.carriedBin.drop(
+                    this.playerContainer,
+                    this.playerContainer.x,
+                    this.playerContainer.y
+                )
+                this.player.dropBin()
+                this.carriedBin = null
+            }
+            
+            this.uiManager.showGameOver(() => {
+                this.scene.restart()
+            })
+        }
+    }
+
+    private handleWin(): void {
+        // Only show win if we successfully transition to that state
+        if (this.stateManager.setWin()) {
+            // Disable player controls
+            this.player.setControlsEnabled(false)
+            
+            // Drop any carried bin
+            if (this.carriedBin) {
+                this.carriedBin.drop(
+                    this.playerContainer,
+                    this.playerContainer.x,
+                    this.playerContainer.y
+                )
+                this.player.dropBin()
+                this.carriedBin = null
+            }
+            
+            this.uiManager.showWin(() => {
+                this.scene.restart()
+            })
+        }
     }
 
     private handleBinInteraction(): void {

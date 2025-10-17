@@ -34,7 +34,7 @@ export const GameConstants = {
         /** Maximum items a bin can hold */
         MAX_CAPACITY: 10,
         /** Frames between draining items (60 = 1 second at 60fps) */
-        DRAIN_INTERVAL_FRAMES: 60,
+        DRAIN_INTERVAL_FRAMES: 120,
         /** Points awarded per item drained (future feature) */
         POINTS_PER_DRAIN: 10,
         /** Capacity meter dimensions */
@@ -197,6 +197,8 @@ export const GameConstants = {
         BIN_DRAIN: 5,
         /** Penalty for wrong trash (currently loses HP instead) */
         WRONG_TRASH_PENALTY: -5,
+        /** Score needed to win the game */
+        WIN_THRESHOLD: 500,
     },
 
     /**
