@@ -97,7 +97,7 @@ export class Bin extends Phaser.Physics.Arcade.Sprite {
 
     public drop(x: number, y: number): void {
         this.isPickedUp = false
-        this.player = null
+        // Don't set player to null - we need it for depth sorting!
 
         // Re-enable physics
         if (this.body) {
@@ -107,7 +107,7 @@ export class Bin extends Phaser.Physics.Arcade.Sprite {
         // Set position where dropped
         this.setPosition(x, y)
 
-        // Reset depth
+        // Reset depth (will be updated by depth sorting logic)
         this.setDepth(10)
     }
 
@@ -116,10 +116,25 @@ export class Bin extends Phaser.Physics.Arcade.Sprite {
         if (this.isPickedUp && this.player) {
             const yOffset = -70 // Position above player's head (adjust as needed)
             this.setPosition(this.player.x, this.player.y + yOffset)
+        } else if (this.player) {
+            // Update depth based on player position for depth illusion
+            // If player is below the bin (player.y > bin.y), bin should be behind (lower depth)
+            // If player is above the bin (player.y < bin.y), bin should be in front (higher depth)
+            if (this.player.y > this.y) {
+                // Player is below bin, so bin should be painted first (lower depth)
+                this.setDepth(5)
+            } else {
+                // Player is above bin, so bin should be painted last (higher depth)
+                this.setDepth(15)
+            }
         }
 
         // Update capacity meter position
         this.updateCapacityMeter()
+    }
+
+    public setPlayer(player: Phaser.Physics.Arcade.Sprite): void {
+        this.player = player
     }
 
     public addItem(): boolean {

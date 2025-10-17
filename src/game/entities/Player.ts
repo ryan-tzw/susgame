@@ -8,7 +8,9 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
         S: Phaser.Input.Keyboard.Key
         D: Phaser.Input.Keyboard.Key
     } | null = null
+    private shiftKey: Phaser.Input.Keyboard.Key | null = null
     private speed = 300
+    private sprintSpeed = 600
     public hp = 5
     public maxHp = 5
     public isCarryingBin = false
@@ -46,6 +48,9 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
                     Phaser.Input.Keyboard.KeyCodes.D
                 ),
             }
+            this.shiftKey = scene.input.keyboard.addKey(
+                Phaser.Input.Keyboard.KeyCodes.SHIFT
+            )
         }
 
         // Create animations
@@ -83,6 +88,10 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
     update(): void {
         if (!this.cursors) return
 
+        // Check if sprinting
+        const isSprinting = this.shiftKey?.isDown || false
+        const currentSpeed = isSprinting ? this.sprintSpeed : this.speed
+
         // Reset velocity
         this.setVelocity(0, 0)
 
@@ -90,21 +99,21 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
 
         // Horizontal movement (Arrow keys + WASD)
         if (this.cursors.left?.isDown || this.wasdKeys?.A.isDown) {
-            this.setVelocityX(-this.speed)
+            this.setVelocityX(-currentSpeed)
             isMoving = true
             this.setFlipX(false) // Sprite is facing left by default, so no flip
         } else if (this.cursors.right?.isDown || this.wasdKeys?.D.isDown) {
-            this.setVelocityX(this.speed)
+            this.setVelocityX(currentSpeed)
             isMoving = true
             this.setFlipX(true) // Flip to face right
         }
 
         // Vertical movement (Arrow keys + WASD)
         if (this.cursors.up?.isDown || this.wasdKeys?.W.isDown) {
-            this.setVelocityY(-this.speed)
+            this.setVelocityY(-currentSpeed)
             isMoving = true
         } else if (this.cursors.down?.isDown || this.wasdKeys?.S.isDown) {
-            this.setVelocityY(this.speed)
+            this.setVelocityY(currentSpeed)
             isMoving = true
         }
 
@@ -122,9 +131,17 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
 
         // Play appropriate animation
         if (isMoving) {
+            // Adjust animation speed based on sprinting
+            const animSpeed = isSprinting ? 10 : 6
+
             // Only start animation if not already playing
             if (this.anims.currentAnim?.key !== 'player-walk-down') {
                 this.play('player-walk-down')
+            }
+
+            // Update animation speed
+            if (this.anims.currentAnim) {
+                this.anims.currentAnim.frameRate = animSpeed
             }
         } else {
             // Stop animation and show idle frame

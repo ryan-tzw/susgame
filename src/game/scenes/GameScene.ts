@@ -48,10 +48,7 @@ export class GameScene extends Phaser.Scene {
 
         // Load dropoff decoration images
         // Place these PNGs in public/assets/sprites/
-        this.load.image(
-            'waste_to_energy',
-            'assets/sprites/waste_to_energy.png'
-        )
+        this.load.image('waste_to_energy', 'assets/sprites/waste_to_energy.png')
         this.load.image('recycling_plant', 'assets/sprites/recycling_plant.png')
         this.load.image('donation_center', 'assets/sprites/donation_center.png')
     }
@@ -90,12 +87,19 @@ export class GameScene extends Phaser.Scene {
     }
 
     create(): void {
-        // Create player at center of screen
-        this.player = new Player(
-            this,
-            this.cameras.main.centerX,
-            this.cameras.main.centerY
-        )
+        // Set up larger world bounds
+        const worldWidth = 3840 // 2x camera width
+        const worldHeight = 2160 // 2x camera height
+        this.physics.world.setBounds(0, 0, worldWidth, worldHeight)
+
+        // Create player at center of world
+        this.player = new Player(this, worldWidth / 2, worldHeight / 2)
+
+        // Set up camera to follow player
+        this.cameras.main.startFollow(this.player)
+        this.cameras.main.setBounds(0, 0, worldWidth, worldHeight)
+        this.cameras.main.setZoom(1)
+        this.cameras.roundPixels = false
 
         // Set up space key for interactions
         if (this.input.keyboard) {
@@ -107,9 +111,9 @@ export class GameScene extends Phaser.Scene {
             )
         }
 
-        // Create bins at specific positions (left side of screen)
-        const binStartX = 200
-        const binStartY = this.cameras.main.centerY - 200
+        // Create bins at specific positions (left side of world)
+        const binStartX = 300
+        const binStartY = worldHeight / 2 - 200
         const binSpacing = 150
 
         const greenBin = new Bin(this, binStartX, binStartY, 'green')
@@ -123,9 +127,12 @@ export class GameScene extends Phaser.Scene {
 
         this.bins.push(greenBin, blueBin, yellowBin)
 
-        // Create dropoff boxes (right side of screen)
-        const dropoffStartX = this.cameras.main.width - 300
-        const dropoffStartY = this.cameras.main.centerY - 250
+        // Set player reference for depth sorting
+        this.bins.forEach((bin) => bin.setPlayer(this.player))
+
+        // Create dropoff boxes (right side of world)
+        const dropoffStartX = worldWidth - 400
+        const dropoffStartY = worldHeight / 2 - 250
         const dropoffSpacing = 250
 
         const greenDropoff = new DropoffBox(
@@ -164,7 +171,7 @@ export class GameScene extends Phaser.Scene {
             .text(
                 16,
                 16,
-                'Arrow Keys/WASD: Move\nSPACE: Pick up/drop bin\nE: Collect trash',
+                'Arrow Keys/WASD: Move\nSHIFT: Sprint\nSPACE: Pick up/drop bin\nE: Collect trash',
                 {
                     fontSize: '18px',
                     color: '#ffffff',
@@ -191,10 +198,10 @@ export class GameScene extends Phaser.Scene {
             return
         }
 
-        // Spawn random trash items across the map
-        const numTrashItems = 15 // Total number of trash items to spawn
-        const mapWidth = this.cameras.main.width
-        const mapHeight = this.cameras.main.height
+        // Spawn random trash items across the larger map
+        const numTrashItems = 50 // Increased for larger map
+        const worldWidth = 3840
+        const worldHeight = 2160
 
         for (let i = 0; i < numTrashItems; i++) {
             // Pick a random trash asset
@@ -203,9 +210,9 @@ export class GameScene extends Phaser.Scene {
                     Phaser.Math.Between(0, this.trashAssets.length - 1)
                 ]
 
-            // Random position (avoiding edges and bin area)
-            const x = Phaser.Math.Between(300, mapWidth - 100)
-            const y = Phaser.Math.Between(100, mapHeight - 100)
+            // Random position across entire world (with some padding from edges)
+            const x = Phaser.Math.Between(400, worldWidth - 400)
+            const y = Phaser.Math.Between(200, worldHeight - 200)
 
             // Create trash item
             const trash = new Trash(
@@ -264,14 +271,14 @@ export class GameScene extends Phaser.Scene {
         // Update player
         this.player.update()
 
+        // Update heart display to follow player
+        this.updateHearts()
+
         // Update bins
         this.bins.forEach((bin) => bin.update())
 
         // Update trash indicators
         this.trashItems.forEach((trash) => trash.updateIndicator())
-
-        // Update heart display to follow player
-        this.updateHearts()
 
         // Check for nearby trash (to show indicator)
         if (this.carriedBin) {
