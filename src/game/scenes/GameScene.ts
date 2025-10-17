@@ -6,12 +6,12 @@ import { DropoffBox } from '../entities/DropoffBox'
 import { SpawnManager } from '../managers/SpawnManager'
 import { TilemapManager } from '../managers/TilemapManager'
 import { InputManager, GameAction } from '../managers/InputManager'
+import { UIManager } from '../managers/UIManager'
 import { GameConstants } from '../config/GameConstants'
 
 export class GameScene extends Phaser.Scene {
     private player!: Player
     private playerContainer!: Phaser.GameObjects.Container
-    private hearts: Phaser.GameObjects.Image[] = []
     private bins: Bin[] = []
     private carriedBin: Bin | null = null
     private nearbyTrash: Trash | null = null
@@ -21,6 +21,7 @@ export class GameScene extends Phaser.Scene {
     private spawnManager!: SpawnManager
     private tilemapManager!: TilemapManager
     private inputManager!: InputManager
+    private uiManager!: UIManager
 
     constructor() {
         super({ key: 'GameScene' })
@@ -111,74 +112,19 @@ export class GameScene extends Phaser.Scene {
             })
         })
 
-        // Add instructional text
-        this.add
-            .text(
-                GameConstants.UI.INSTRUCTIONS.X,
-                GameConstants.UI.INSTRUCTIONS.Y,
-                GameConstants.UI.INSTRUCTIONS.TEXT,
-                {
-                    fontSize: GameConstants.UI.INSTRUCTIONS.FONT_SIZE,
-                    color: GameConstants.UI.INSTRUCTIONS.COLOR,
-                    backgroundColor:
-                        GameConstants.UI.INSTRUCTIONS.BACKGROUND_COLOR,
-                    padding: GameConstants.UI.INSTRUCTIONS.PADDING,
-                }
-            )
-            .setScrollFactor(0)
-            .setDepth(100)
-
-        // Create heart display (will be positioned below player in update)
-        this.createHearts()
+        // Initialize UI manager (handles hearts, score, instructions, overlays)
+        this.uiManager = new UIManager(this, this.player, this.playerContainer)
 
         // Spawn initial trash items (start with less, more will spawn over time)
         this.spawnManager.spawnInitialTrash(GameConstants.SPAWN.INITIAL_COUNT)
-    }
-
-    private createHearts(): void {
-        // Create hearts and add them to the player container
-        const heartSpacing = GameConstants.UI.HEARTS.SPACING
-        const heartCount = GameConstants.UI.HEARTS.COUNT
-        const totalWidth = (heartCount - 1) * heartSpacing
-        const startX = -totalWidth / 2
-        const yOffset = GameConstants.UI.HEARTS.Y_OFFSET
-
-        for (let i = 0; i < heartCount; i++) {
-            const heart = this.add
-                .image(startX + i * heartSpacing, yOffset, 'heart_filled')
-                .setDepth(GameConstants.UI.HEARTS.DEPTH)
-                .setScale(GameConstants.UI.HEARTS.SCALE)
-            this.hearts.push(heart)
-            this.playerContainer.add(heart)
-        }
-    }
-
-    private updateHearts(): void {
-        // Update heart textures based on current HP
-        // Position is now handled by the container, so we only update textures
-        for (let i = 0; i < this.hearts.length; i++) {
-            const heart = this.hearts[i]
-
-            // Show filled or empty heart based on current HP
-            const textureKey =
-                i < this.player.hp ? 'heart_filled' : 'heart_empty'
-
-            // Only set texture if it exists and is different
-            if (
-                this.textures.exists(textureKey) &&
-                heart.texture.key !== textureKey
-            ) {
-                heart.setTexture(textureKey)
-            }
-        }
     }
 
     update(): void {
         // Update player (handles input and moves container)
         this.player.update()
 
-        // Update heart display textures (position handled by container)
-        this.updateHearts()
+        // Update UI (hearts, score, etc.)
+        this.uiManager.update()
 
         // Update bins
         this.bins.forEach((bin) => bin.update())
@@ -231,7 +177,17 @@ export class GameScene extends Phaser.Scene {
                 if (this.drainTimer >= this.drainInterval) {
                     bin.drainItem()
                     this.drainTimer = 0
-                    // TODO: Add score/points when draining
+
+                    // Add score for draining
+                    this.uiManager.addScore(GameConstants.SCORE.BIN_DRAIN)
+
+                    // Show animated score popup above the bin
+                    this.uiManager.showScorePopup(
+                        bin.x,
+                        bin.y - 60, // Above the bin
+                        GameConstants.SCORE.BIN_DRAIN,
+                        '#ffff00' // Yellow for draining
+                    )
                 }
             } else {
                 bin.isDraining = false
@@ -286,7 +242,7 @@ export class GameScene extends Phaser.Scene {
 
         // Check if bin is full
         if (this.carriedBin.isFull()) {
-            console.log('Bin is full! Go deposit it at the dropoff box.')
+            this.uiManager.showNotification('Bin is full!', 2000, '#ff9900')
             return
         }
 
@@ -295,10 +251,24 @@ export class GameScene extends Phaser.Scene {
             // Correct trash! Add to bin
             const added = this.carriedBin.addItem()
             if (added) {
+                // Store trash position before destroying
+                const trashX = trash.x
+                const trashY = trash.y
+
                 trash.collect()
                 this.spawnManager.removeTrash(trash)
                 this.nearbyTrash = null
-                // TODO: Add visual/audio feedback
+
+                // Add score for correct collection
+                this.uiManager.addScore(GameConstants.SCORE.CORRECT_TRASH)
+
+                // Show animated score popup at trash location
+                this.uiManager.showScorePopup(
+                    trashX,
+                    trashY,
+                    GameConstants.SCORE.CORRECT_TRASH,
+                    '#00ff00'
+                )
             }
         } else {
             // Wrong trash! Lose HP
@@ -307,8 +277,15 @@ export class GameScene extends Phaser.Scene {
             this.nearbyTrash = null
             this.player.takeDamage(1)
 
-            // TODO: Add damage visual/audio feedback
-            console.log(`Wrong trash! Lost 1 HP. Current HP: ${this.player.hp}`)
+            // Show damage popup above player
+            this.uiManager.showDamagePopup(
+                this.playerContainer.x,
+                this.playerContainer.y - 40, // Above player
+                1
+            )
+
+            // Also show notification
+            this.uiManager.showNotification('Wrong bin! -1 HP', 2000, '#ff0000')
 
             // Check for game over
             if (this.player.hp <= 0) {
@@ -318,10 +295,10 @@ export class GameScene extends Phaser.Scene {
     }
 
     private handleGameOver(): void {
-        // TODO: Show game over screen
-        console.log('GAME OVER!')
-        // For now, just restart the scene
-        this.scene.restart()
+        // Show game over overlay with restart option
+        this.uiManager.showGameOver(() => {
+            this.scene.restart()
+        })
     }
 
     private handleBinInteraction(): void {
