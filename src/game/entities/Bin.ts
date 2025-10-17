@@ -6,6 +6,12 @@ export class Bin extends Phaser.Physics.Arcade.Sprite {
     public binType: BinType
     public isPickedUp = false
     private player: Phaser.Physics.Arcade.Sprite | null = null
+    public itemCount = 0
+    public maxCapacity = 10
+    public isDraining = false
+    private capacityMeter: Phaser.GameObjects.Container | null = null
+    private meterBackground: Phaser.GameObjects.Rectangle | null = null
+    private meterFill: Phaser.GameObjects.Rectangle | null = null
 
     constructor(scene: Phaser.Scene, x: number, y: number, binType: BinType) {
         // Map bin type to sprite key
@@ -23,6 +29,57 @@ export class Bin extends Phaser.Physics.Arcade.Sprite {
 
         // Set depth so bin appears correctly
         this.setDepth(10)
+
+        // Create capacity meter
+        this.createCapacityMeter(scene)
+    }
+
+    private createCapacityMeter(scene: Phaser.Scene): void {
+        const meterWidth = 60
+        const meterHeight = 8
+
+        // Background (gray)
+        this.meterBackground = scene.add
+            .rectangle(0, 0, meterWidth, meterHeight, 0x555555)
+            .setOrigin(0, 0.5)
+
+        // Fill (color based on bin type)
+        const fillColors = {
+            green: 0x4ade80,
+            blue: 0x60a5fa,
+            yellow: 0xfbbf24,
+        }
+
+        this.meterFill = scene.add
+            .rectangle(0, 0, 0, meterHeight, fillColors[this.binType])
+            .setOrigin(0, 0.5)
+
+        // Container to hold both
+        this.capacityMeter = scene.add.container(0, 0, [
+            this.meterBackground,
+            this.meterFill,
+        ])
+        this.capacityMeter.setDepth(1003)
+        this.capacityMeter.setVisible(false)
+    }
+
+    private updateCapacityMeter(): void {
+        if (!this.capacityMeter || !this.meterFill || !this.meterBackground)
+            return
+
+        // Position above bin
+        const yOffset = -50
+        this.capacityMeter.setPosition(
+            this.x - this.meterBackground.width / 2,
+            this.y + yOffset
+        )
+
+        // Update fill width based on item count
+        const fillPercentage = this.itemCount / this.maxCapacity
+        this.meterFill.width = this.meterBackground.width * fillPercentage
+
+        // Show meter only when bin has items
+        this.capacityMeter.setVisible(this.itemCount > 0)
     }
 
     public pickUp(player: Phaser.Physics.Arcade.Sprite): void {
@@ -60,6 +117,33 @@ export class Bin extends Phaser.Physics.Arcade.Sprite {
             const yOffset = -70 // Position above player's head (adjust as needed)
             this.setPosition(this.player.x, this.player.y + yOffset)
         }
+
+        // Update capacity meter position
+        this.updateCapacityMeter()
+    }
+
+    public addItem(): boolean {
+        if (this.itemCount >= this.maxCapacity) {
+            return false // Bin is full
+        }
+        this.itemCount++
+        return true
+    }
+
+    public drainItem(): boolean {
+        if (this.itemCount <= 0) {
+            return false // Bin is empty
+        }
+        this.itemCount--
+        return true
+    }
+
+    public isEmpty(): boolean {
+        return this.itemCount === 0
+    }
+
+    public isFull(): boolean {
+        return this.itemCount >= this.maxCapacity
     }
 
     public getBinTypeFullName(): string {

@@ -3,6 +3,7 @@ import { Player } from '../entities/Player'
 import { Bin } from '../entities/Bin'
 import { Trash } from '../entities/Trash'
 import { TrashLoader, TrashAsset } from '../utils/TrashLoader'
+import { DropoffBox } from '../entities/DropoffBox'
 
 export class GameScene extends Phaser.Scene {
     private player!: Player
@@ -14,6 +15,9 @@ export class GameScene extends Phaser.Scene {
     private trashItems: Trash[] = []
     private trashAssets: TrashAsset[] = []
     private nearbyTrash: Trash | null = null
+    private dropoffBoxes: DropoffBox[] = []
+    private drainTimer = 0
+    private drainInterval = 60 // Frames between draining items (60 = 1 second at 60fps)
 
     constructor() {
         super({ key: 'GameScene' })
@@ -42,7 +46,14 @@ export class GameScene extends Phaser.Scene {
         // Load trash sprites from organized folders
         this.loadTrashSprites()
 
-        // TODO: Load other assets (dropoff boxes, etc.)
+        // Load dropoff decoration images
+        // Place these PNGs in public/assets/sprites/
+        this.load.image(
+            'waste_to_energy',
+            'assets/sprites/waste_to_energy.png'
+        )
+        this.load.image('recycling_plant', 'assets/sprites/recycling_plant.png')
+        this.load.image('donation_center', 'assets/sprites/donation_center.png')
     }
 
     private loadTrashSprites(): void {
@@ -111,6 +122,35 @@ export class GameScene extends Phaser.Scene {
         )
 
         this.bins.push(greenBin, blueBin, yellowBin)
+
+        // Create dropoff boxes (right side of screen)
+        const dropoffStartX = this.cameras.main.width - 300
+        const dropoffStartY = this.cameras.main.centerY - 250
+        const dropoffSpacing = 250
+
+        const greenDropoff = new DropoffBox(
+            this,
+            dropoffStartX,
+            dropoffStartY,
+            'green',
+            'waste_to_energy'
+        )
+        const blueDropoff = new DropoffBox(
+            this,
+            dropoffStartX,
+            dropoffStartY + dropoffSpacing,
+            'blue',
+            'recycling_plant'
+        )
+        const yellowDropoff = new DropoffBox(
+            this,
+            dropoffStartX,
+            dropoffStartY + dropoffSpacing * 2,
+            'yellow',
+            'donation_center'
+        )
+
+        this.dropoffBoxes.push(greenDropoff, blueDropoff, yellowDropoff)
 
         // Set up collision detection between player and bins
         this.bins.forEach((bin) => {
@@ -207,10 +247,15 @@ export class GameScene extends Phaser.Scene {
             )
 
             // Show filled or empty heart based on current HP
-            if (i < this.player.hp) {
-                heart.setTexture('heart_filled')
-            } else {
-                heart.setTexture('heart_empty')
+            const textureKey =
+                i < this.player.hp ? 'heart_filled' : 'heart_empty'
+
+            // Only set texture if it exists and is different
+            if (
+                this.textures.exists(textureKey) &&
+                heart.texture.key !== textureKey
+            ) {
+                heart.setTexture(textureKey)
             }
         }
     }
@@ -233,6 +278,9 @@ export class GameScene extends Phaser.Scene {
             this.checkNearbyTrash()
         }
 
+        // Check for bin draining at dropoff boxes
+        this.checkBinDraining()
+
         // Handle bin pickup/drop with SPACE key
         if (Phaser.Input.Keyboard.JustDown(this.spaceKey)) {
             this.handleBinInteraction()
@@ -241,6 +289,42 @@ export class GameScene extends Phaser.Scene {
         // Handle trash collection with E key
         if (Phaser.Input.Keyboard.JustDown(this.eKey)) {
             this.handleTrashCollection()
+        }
+    }
+
+    private checkBinDraining(): void {
+        // Check each bin to see if it's on a dropoff box
+        for (const bin of this.bins) {
+            if (bin.isPickedUp || bin.isEmpty()) {
+                bin.isDraining = false
+                continue
+            }
+
+            // Check if bin is on the correct dropoff box
+            let isOnCorrectDropoff = false
+            for (const dropoff of this.dropoffBoxes) {
+                if (
+                    dropoff.boxType === bin.binType &&
+                    dropoff.checkBinOverlap(bin.x, bin.y)
+                ) {
+                    isOnCorrectDropoff = true
+                    break
+                }
+            }
+
+            if (isOnCorrectDropoff) {
+                bin.isDraining = true
+
+                // Drain items over time
+                this.drainTimer++
+                if (this.drainTimer >= this.drainInterval) {
+                    bin.drainItem()
+                    this.drainTimer = 0
+                    // TODO: Add score/points when draining
+                }
+            } else {
+                bin.isDraining = false
+            }
         }
     }
 
@@ -281,17 +365,25 @@ export class GameScene extends Phaser.Scene {
 
         const trash = this.nearbyTrash
 
+        // Check if bin is full
+        if (this.carriedBin.isFull()) {
+            console.log('Bin is full! Go deposit it at the dropoff box.')
+            return
+        }
+
         // Check if trash matches the carried bin
         if (trash.binType === this.carriedBin.binType) {
-            // Correct trash! Collect it
-            trash.collect()
-            const index = this.trashItems.indexOf(trash)
-            if (index > -1) {
-                this.trashItems.splice(index, 1)
+            // Correct trash! Add to bin
+            const added = this.carriedBin.addItem()
+            if (added) {
+                trash.collect()
+                const index = this.trashItems.indexOf(trash)
+                if (index > -1) {
+                    this.trashItems.splice(index, 1)
+                }
+                this.nearbyTrash = null
+                // TODO: Add visual/audio feedback
             }
-            this.nearbyTrash = null
-            // TODO: Add score/progress tracking
-            // TODO: Add visual/audio feedback
         } else {
             // Wrong trash! Lose HP
             trash.collect()
