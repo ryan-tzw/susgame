@@ -1,5 +1,6 @@
 import Phaser from 'phaser'
 import { BinType } from './Bin'
+import { GameConstants } from '../config/GameConstants'
 
 export class Trash extends Phaser.Physics.Arcade.Sprite {
     public binType: BinType // Which bin this trash belongs to
@@ -30,16 +31,16 @@ export class Trash extends Phaser.Physics.Arcade.Sprite {
         this.setImmovable(true)
 
         // Scale down
-        this.setScale(0.65)
+        this.setScale(GameConstants.TRASH.SCALE)
 
         // Set depth so trash appears below the player
-        this.setDepth(2)
+        this.setDepth(GameConstants.TRASH.DEPTH)
 
         // Create indicator arrow (hidden by default)
         this.indicator = scene.add
             .image(0, 0, 'arrow')
             .setOrigin(0.5)
-            .setScale(1) // Adjust scale as needed for your arrow size
+            .setScale(GameConstants.TRASH.INDICATOR.SCALE)
             .setVisible(false)
             .setDepth(1002)
     }
@@ -68,11 +69,15 @@ export class Trash extends Phaser.Physics.Arcade.Sprite {
     public updateIndicator(): void {
         if (this.indicator && this.isNearPlayer) {
             // Update hover animation using sin wave
-            this.hoverOffset += 0.1 // Speed of animation
-            const hoverAmount = Math.sin(this.hoverOffset) * 5 // 5 pixels up/down
+            this.hoverOffset += GameConstants.TRASH.HOVER.SPEED
+            const hoverAmount =
+                Math.sin(this.hoverOffset) * GameConstants.TRASH.HOVER.AMPLITUDE
 
             // Position arrow above trash with hover animation
-            this.indicator.setPosition(this.x, this.y - 50 + hoverAmount)
+            this.indicator.setPosition(
+                this.x,
+                this.y + GameConstants.TRASH.INDICATOR.OFFSET_Y + hoverAmount
+            )
         }
     }
 

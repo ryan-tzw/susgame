@@ -6,6 +6,7 @@ import { DropoffBox } from '../entities/DropoffBox'
 import { SpawnManager } from '../managers/SpawnManager'
 import { TilemapManager } from '../managers/TilemapManager'
 import { InputManager, GameAction } from '../managers/InputManager'
+import { GameConstants } from '../config/GameConstants'
 
 export class GameScene extends Phaser.Scene {
     private player!: Player
@@ -16,7 +17,7 @@ export class GameScene extends Phaser.Scene {
     private nearbyTrash: Trash | null = null
     private dropoffBoxes: DropoffBox[] = []
     private drainTimer = 0
-    private drainInterval = 60 // Frames between draining items (60 = 1 second at 60fps)
+    private drainInterval = GameConstants.BIN.DRAIN_INTERVAL_FRAMES
     private spawnManager!: SpawnManager
     private tilemapManager!: TilemapManager
     private inputManager!: InputManager
@@ -113,14 +114,15 @@ export class GameScene extends Phaser.Scene {
         // Add instructional text
         this.add
             .text(
-                16,
-                16,
-                'Arrow Keys/WASD: Move\nSHIFT: Sprint\nSPACE: Pick up/drop bin\nE: Collect trash',
+                GameConstants.UI.INSTRUCTIONS.X,
+                GameConstants.UI.INSTRUCTIONS.Y,
+                GameConstants.UI.INSTRUCTIONS.TEXT,
                 {
-                    fontSize: '18px',
-                    color: '#ffffff',
-                    backgroundColor: '#000000',
-                    padding: { x: 10, y: 10 },
+                    fontSize: GameConstants.UI.INSTRUCTIONS.FONT_SIZE,
+                    color: GameConstants.UI.INSTRUCTIONS.COLOR,
+                    backgroundColor:
+                        GameConstants.UI.INSTRUCTIONS.BACKGROUND_COLOR,
+                    padding: GameConstants.UI.INSTRUCTIONS.PADDING,
                 }
             )
             .setScrollFactor(0)
@@ -130,21 +132,22 @@ export class GameScene extends Phaser.Scene {
         this.createHearts()
 
         // Spawn initial trash items (start with less, more will spawn over time)
-        this.spawnManager.spawnInitialTrash(15)
+        this.spawnManager.spawnInitialTrash(GameConstants.SPAWN.INITIAL_COUNT)
     }
 
     private createHearts(): void {
-        // Create 5 hearts and add them to the player container
-        const heartSpacing = 30
-        const totalWidth = (5 - 1) * heartSpacing
+        // Create hearts and add them to the player container
+        const heartSpacing = GameConstants.UI.HEARTS.SPACING
+        const heartCount = GameConstants.UI.HEARTS.COUNT
+        const totalWidth = (heartCount - 1) * heartSpacing
         const startX = -totalWidth / 2
-        const yOffset = 80 // Position below player (relative to player at 0,0)
+        const yOffset = GameConstants.UI.HEARTS.Y_OFFSET
 
-        for (let i = 0; i < 5; i++) {
+        for (let i = 0; i < heartCount; i++) {
             const heart = this.add
                 .image(startX + i * heartSpacing, yOffset, 'heart_filled')
-                .setDepth(-1) // Behind player within container
-                .setScale(0.75)
+                .setDepth(GameConstants.UI.HEARTS.DEPTH)
+                .setScale(GameConstants.UI.HEARTS.SCALE)
             this.hearts.push(heart)
             this.playerContainer.add(heart)
         }
@@ -253,8 +256,11 @@ export class GameScene extends Phaser.Scene {
                 trash.y
             )
 
-            // Within pickup range (80 pixels)
-            if (distance < 80 && distance < closestDistance) {
+            // Within pickup range
+            if (
+                distance < GameConstants.PLAYER.PICKUP_RANGE &&
+                distance < closestDistance
+            ) {
                 closestTrash = trash
                 closestDistance = distance
             }
@@ -333,7 +339,7 @@ export class GameScene extends Phaser.Scene {
             for (const bin of this.bins) {
                 if (bin.isPickedUp) continue
 
-                // Check if player is close enough to the bin (use container position)
+                // Check if player is close enough to the bin
                 const distance = Phaser.Math.Distance.Between(
                     this.playerContainer.x,
                     this.playerContainer.y,
@@ -341,7 +347,7 @@ export class GameScene extends Phaser.Scene {
                     bin.y
                 )
 
-                if (distance < 80) {
+                if (distance < GameConstants.PLAYER.PICKUP_RANGE) {
                     // Pick up the bin
                     bin.pickUp(this.player, this.playerContainer)
                     this.player.pickUpBin(bin.binType)

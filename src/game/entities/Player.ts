@@ -1,4 +1,5 @@
 import Phaser from 'phaser'
+import { GameConstants } from '../config/GameConstants'
 
 export class Player extends Phaser.Physics.Arcade.Sprite {
     private cursors: Phaser.Types.Input.Keyboard.CursorKeys | null = null
@@ -9,10 +10,10 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
         D: Phaser.Input.Keyboard.Key
     } | null = null
     private shiftKey: Phaser.Input.Keyboard.Key | null = null
-    private speed = 300
-    private sprintSpeed = 600
-    public hp = 5
-    public maxHp = 5
+    private speed = GameConstants.PLAYER.MOVE_SPEED
+    private sprintSpeed = GameConstants.PLAYER.SPRINT_SPEED
+    public hp: number = GameConstants.PLAYER.STARTING_HP
+    public maxHp: number = GameConstants.PLAYER.MAX_HP
     public isCarryingBin = false
     public currentBinType: string | null = null
     private container: Phaser.GameObjects.Container | null = null

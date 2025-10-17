@@ -1,4 +1,5 @@
 import Phaser from 'phaser'
+import { GameConstants } from '../config/GameConstants'
 
 export type BinType = 'green' | 'blue' | 'yellow'
 
@@ -8,7 +9,7 @@ export class Bin extends Phaser.Physics.Arcade.Sprite {
     private player: Phaser.Physics.Arcade.Sprite | null = null
     private playerContainer: Phaser.GameObjects.Container | null = null
     public itemCount = 0
-    public maxCapacity = 10
+    public maxCapacity = GameConstants.BIN.MAX_CAPACITY
     public isDraining = false
     private capacityMeter: Phaser.GameObjects.Container | null = null
     private meterBackground: Phaser.GameObjects.Rectangle | null = null
@@ -36,8 +37,8 @@ export class Bin extends Phaser.Physics.Arcade.Sprite {
     }
 
     private createCapacityMeter(scene: Phaser.Scene): void {
-        const meterWidth = 60
-        const meterHeight = 8
+        const meterWidth = GameConstants.BIN.METER.WIDTH
+        const meterHeight = GameConstants.BIN.METER.HEIGHT
 
         // Background (gray)
         this.meterBackground = scene.add
@@ -46,9 +47,9 @@ export class Bin extends Phaser.Physics.Arcade.Sprite {
 
         // Fill (color based on bin type)
         const fillColors = {
-            green: 0x4ade80,
-            blue: 0x60a5fa,
-            yellow: 0xfbbf24,
+            green: GameConstants.BIN.COLORS.GREEN,
+            blue: GameConstants.BIN.COLORS.BLUE,
+            yellow: GameConstants.BIN.COLORS.YELLOW,
         }
 
         this.meterFill = scene.add
@@ -69,7 +70,7 @@ export class Bin extends Phaser.Physics.Arcade.Sprite {
             return
 
         // Position above bin
-        const yOffset = -50
+        const yOffset = GameConstants.BIN.METER.OFFSET_Y
         this.capacityMeter.setPosition(
             this.x - this.meterBackground.width / 2,
             this.y + yOffset

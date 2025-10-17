@@ -4,6 +4,7 @@ import { Trash } from '../entities/Trash'
 import { DropoffBox } from '../entities/DropoffBox'
 import { TrashAsset } from '../utils/TrashLoader'
 import { Player } from '../entities/Player'
+import { GameConstants } from '../config/GameConstants'
 
 export class SpawnManager {
     private scene: Phaser.Scene
@@ -14,9 +15,9 @@ export class SpawnManager {
     private grassLayer: Phaser.Tilemaps.TilemapLayer | null = null
 
     // Continuous spawning config
-    private maxTrashItems = 60 // Maximum trash items on map
-    private minSpawnInterval = 2000 // Minimum time between spawns (ms) - when trash is very low
-    private maxSpawnInterval = 10000 // Maximum time between spawns (ms) - when trash is plentiful
+    private maxTrashItems: number = GameConstants.SPAWN.MAX_ITEMS
+    private minSpawnInterval: number = GameConstants.SPAWN.MIN_INTERVAL_MS
+    private maxSpawnInterval: number = GameConstants.SPAWN.MAX_INTERVAL_MS
     private nextSpawnTime = 0
     private isSpawningEnabled = true
 
@@ -78,11 +79,17 @@ export class SpawnManager {
      * Find a random valid spawn position
      */
     private findValidSpawnPosition(
-        maxAttempts = 20
+        maxAttempts = GameConstants.SPAWN.MAX_SPAWN_ATTEMPTS
     ): { x: number; y: number } | null {
         for (let i = 0; i < maxAttempts; i++) {
-            const x = Phaser.Math.Between(400, this.worldWidth - 400)
-            const y = Phaser.Math.Between(200, this.worldHeight - 200)
+            const x = Phaser.Math.Between(
+                GameConstants.SPAWN.MARGIN.X,
+                this.worldWidth - GameConstants.SPAWN.MARGIN.X
+            )
+            const y = Phaser.Math.Between(
+                GameConstants.SPAWN.MARGIN.Y,
+                this.worldHeight - GameConstants.SPAWN.MARGIN.Y
+            )
 
             if (this.isValidSpawnPosition(x, y)) {
                 return { x, y }
@@ -129,8 +136,8 @@ export class SpawnManager {
             // Animate scale up with bounce effect
             this.scene.tweens.add({
                 targets: trash,
-                scale: 0.65, // Target scale (normal size)
-                duration: 400,
+                scale: GameConstants.TRASH.SCALE, // Target scale (normal size)
+                duration: GameConstants.SPAWN.SPAWN_ANIMATION_MS,
                 ease: 'Back.easeOut',
                 onComplete: () => {
                     // Enable pickup after animation completes
@@ -209,9 +216,9 @@ export class SpawnManager {
         playerContainer: Phaser.GameObjects.Container
     ): Bin[] {
         const bins: Bin[] = []
-        const binStartX = 300
+        const binStartX = GameConstants.BIN.SPAWN.START_X
         const binStartY = this.worldHeight / 2 - 200
-        const binSpacing = 150
+        const binSpacing = GameConstants.BIN.SPAWN.SPACING_Y
 
         const binTypes: BinType[] = ['green', 'blue', 'yellow']
         binTypes.forEach((type, index) => {
@@ -233,9 +240,9 @@ export class SpawnManager {
      */
     public spawnDropoffBoxes(): DropoffBox[] {
         const dropoffBoxes: DropoffBox[] = []
-        const dropoffStartX = this.worldWidth - 400
+        const dropoffStartX = GameConstants.DROPOFF.SPAWN.START_X
         const dropoffStartY = this.worldHeight / 2 - 250
-        const dropoffSpacing = 250
+        const dropoffSpacing = GameConstants.DROPOFF.SPAWN.SPACING_Y
 
         const dropoffConfigs: Array<{
             type: BinType
