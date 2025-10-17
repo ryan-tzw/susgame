@@ -8,6 +8,11 @@ export const gameConfig: Phaser.Types.Core.GameConfig = {
     height: 1080,
     parent: 'game-container',
     backgroundColor: '#000000', // Black background (tilemap will cover this)
+    render: {
+        antialias: true, // Keep smooth for hand-drawn sprites
+        antialiasGL: true,
+        roundPixels: true, // Round pixel positions to prevent sub-pixel gaps
+    },
     physics: {
         default: 'arcade',
         arcade: {

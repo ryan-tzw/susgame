@@ -33,6 +33,15 @@ export class TilemapManager {
         // Create the terrain layer (single layer contains all terrain types)
         this.terrainLayer = this.map.createLayer('terrain', this.tileset, 0, 0)
 
+        // Prevent tile bleeding
+        if (this.terrainLayer) {
+            // Round tile positions to prevent sub-pixel rendering gaps
+            this.terrainLayer.setPosition(
+                Math.round(this.terrainLayer.x),
+                Math.round(this.terrainLayer.y)
+            )
+        }
+
         // Set layer depth (below player)
         this.terrainLayer?.setDepth(1)
 

@@ -94,10 +94,11 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
      */
     public setControlsEnabled(enabled: boolean): void {
         this.controlsEnabled = enabled
-        
+
         // Stop movement when controls are disabled
         if (!enabled && this.container?.body) {
-            const containerBody = this.container.body as Phaser.Physics.Arcade.Body
+            const containerBody = this.container
+                .body as Phaser.Physics.Arcade.Body
             containerBody.setVelocity(0, 0)
             // Show idle animation
             if (this.anims.currentAnim?.key !== 'player-idle') {

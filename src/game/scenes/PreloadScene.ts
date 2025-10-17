@@ -48,6 +48,12 @@ export class PreloadScene extends Phaser.Scene {
     }
 
     create(): void {
+        // Disable anti-aliasing on the tilemap spritesheet to prevent tile bleeding
+        const tilemapTexture = this.textures.get('spritesheet')
+        if (tilemapTexture) {
+            tilemapTexture.setFilter(Phaser.Textures.FilterMode.NEAREST)
+        }
+
         // Store trash assets in registry so GameScene can access them
         this.registry.set('trashAssets', this.trashAssets)
 

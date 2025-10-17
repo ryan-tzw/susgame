@@ -84,7 +84,7 @@ export class GameScene extends Phaser.Scene {
         this.cameras.main.startFollow(this.playerContainer)
         this.cameras.main.setBounds(0, 0, worldWidth, worldHeight)
         this.cameras.main.setZoom(1)
-        this.cameras.main.setRoundPixels(false)
+        this.cameras.main.setRoundPixels(true) // Round pixel positions to prevent sub-pixel gaps
 
         // Set up input manager and subscribe to actions
         this.inputManager = new InputManager(this)
@@ -336,7 +336,7 @@ export class GameScene extends Phaser.Scene {
         if (this.stateManager.setGameOver()) {
             // Disable player controls
             this.player.setControlsEnabled(false)
-            
+
             // Drop any carried bin
             if (this.carriedBin) {
                 this.carriedBin.drop(
@@ -347,7 +347,7 @@ export class GameScene extends Phaser.Scene {
                 this.player.dropBin()
                 this.carriedBin = null
             }
-            
+
             this.uiManager.showGameOver(() => {
                 this.scene.restart()
             })
@@ -359,7 +359,7 @@ export class GameScene extends Phaser.Scene {
         if (this.stateManager.setWin()) {
             // Disable player controls
             this.player.setControlsEnabled(false)
-            
+
             // Drop any carried bin
             if (this.carriedBin) {
                 this.carriedBin.drop(
@@ -370,7 +370,7 @@ export class GameScene extends Phaser.Scene {
                 this.player.dropBin()
                 this.carriedBin = null
             }
-            
+
             this.uiManager.showWin(() => {
                 this.scene.restart()
             })
