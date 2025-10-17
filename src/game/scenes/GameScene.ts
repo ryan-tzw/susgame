@@ -2,8 +2,8 @@ import Phaser from 'phaser'
 import { Player } from '../entities/Player'
 import { Bin } from '../entities/Bin'
 import { Trash } from '../entities/Trash'
-import { TrashAsset } from '../utils/TrashLoader'
 import { DropoffBox } from '../entities/DropoffBox'
+import { SpawnManager } from '../managers/SpawnManager'
 
 export class GameScene extends Phaser.Scene {
     private player!: Player
@@ -13,12 +13,11 @@ export class GameScene extends Phaser.Scene {
     private carriedBin: Bin | null = null
     private spaceKey!: Phaser.Input.Keyboard.Key
     private eKey!: Phaser.Input.Keyboard.Key
-    private trashItems: Trash[] = []
-    private trashAssets: TrashAsset[] = []
     private nearbyTrash: Trash | null = null
     private dropoffBoxes: DropoffBox[] = []
     private drainTimer = 0
     private drainInterval = 60 // Frames between draining items (60 = 1 second at 60fps)
+    private spawnManager!: SpawnManager
 
     constructor() {
         super({ key: 'GameScene' })
@@ -26,7 +25,8 @@ export class GameScene extends Phaser.Scene {
 
     create(): void {
         // Get trash assets from registry (loaded in PreloadScene)
-        this.trashAssets = this.registry.get('trashAssets') || []
+        const trashAssets = this.registry.get('trashAssets') || []
+
         // Set up larger world bounds
         const worldWidth = 3840 // 2x camera width
         const worldHeight = 2160 // 2x camera height
@@ -62,55 +62,22 @@ export class GameScene extends Phaser.Scene {
             )
         }
 
-        // Create bins at specific positions (left side of world)
-        const binStartX = 300
-        const binStartY = worldHeight / 2 - 200
-        const binSpacing = 150
-
-        const greenBin = new Bin(this, binStartX, binStartY, 'green')
-        const blueBin = new Bin(this, binStartX, binStartY + binSpacing, 'blue')
-        const yellowBin = new Bin(
+        // Initialize spawn manager
+        this.spawnManager = new SpawnManager(
             this,
-            binStartX,
-            binStartY + binSpacing * 2,
-            'yellow'
+            trashAssets,
+            worldWidth,
+            worldHeight
         )
 
-        this.bins.push(greenBin, blueBin, yellowBin)
-
-        // Set player reference for depth sorting
-        this.bins.forEach((bin) =>
-            bin.setPlayer(this.player, this.playerContainer)
+        // Spawn bins using spawn manager
+        this.bins = this.spawnManager.spawnBins(
+            this.player,
+            this.playerContainer
         )
 
-        // Create dropoff boxes (right side of world)
-        const dropoffStartX = worldWidth - 400
-        const dropoffStartY = worldHeight / 2 - 250
-        const dropoffSpacing = 250
-
-        const greenDropoff = new DropoffBox(
-            this,
-            dropoffStartX,
-            dropoffStartY,
-            'green',
-            'waste_to_energy'
-        )
-        const blueDropoff = new DropoffBox(
-            this,
-            dropoffStartX,
-            dropoffStartY + dropoffSpacing,
-            'blue',
-            'recycling_plant'
-        )
-        const yellowDropoff = new DropoffBox(
-            this,
-            dropoffStartX,
-            dropoffStartY + dropoffSpacing * 2,
-            'yellow',
-            'donation_center'
-        )
-
-        this.dropoffBoxes.push(greenDropoff, blueDropoff, yellowDropoff)
+        // Spawn dropoff boxes using spawn manager
+        this.dropoffBoxes = this.spawnManager.spawnDropoffBoxes()
 
         // Set up collision detection between player and bins
         this.bins.forEach((bin) => {
@@ -138,46 +105,8 @@ export class GameScene extends Phaser.Scene {
         // Create heart display (will be positioned below player in update)
         this.createHearts()
 
-        // Spawn trash items
-        this.spawnTrash()
-    }
-
-    private spawnTrash(): void {
-        // Only spawn trash if we have loaded assets
-        if (this.trashAssets.length === 0) {
-            console.log(
-                'No trash assets loaded. Add PNG files to trash folders.'
-            )
-            return
-        }
-
-        // Spawn random trash items across the larger map
-        const numTrashItems = 50 // Increased for larger map
-        const worldWidth = 3840
-        const worldHeight = 2160
-
-        for (let i = 0; i < numTrashItems; i++) {
-            // Pick a random trash asset
-            const randomAsset =
-                this.trashAssets[
-                    Phaser.Math.Between(0, this.trashAssets.length - 1)
-                ]
-
-            // Random position across entire world (with some padding from edges)
-            const x = Phaser.Math.Between(400, worldWidth - 400)
-            const y = Phaser.Math.Between(200, worldHeight - 200)
-
-            // Create trash item
-            const trash = new Trash(
-                this,
-                x,
-                y,
-                randomAsset.binType,
-                randomAsset.key
-            )
-
-            this.trashItems.push(trash)
-        }
+        // Spawn initial trash items (start with less, more will spawn over time)
+        this.spawnManager.spawnInitialTrash(15)
     }
 
     private createHearts(): void {
@@ -227,8 +156,13 @@ export class GameScene extends Phaser.Scene {
         // Update bins
         this.bins.forEach((bin) => bin.update())
 
+        // Update spawn manager (handles continuous spawning)
+        this.spawnManager.update(this.time.now)
+
         // Update trash indicators
-        this.trashItems.forEach((trash) => trash.updateIndicator())
+        this.spawnManager
+            .getTrashItems()
+            .forEach((trash) => trash.updateIndicator())
 
         // Check for nearby trash (to show indicator)
         if (this.carriedBin) {
@@ -292,8 +226,8 @@ export class GameScene extends Phaser.Scene {
         let closestDistance = Infinity
 
         // Find the closest trash within range (use container position)
-        for (const trash of this.trashItems) {
-            if (trash.isCollected) continue
+        for (const trash of this.spawnManager.getTrashItems()) {
+            if (!trash.canPickup()) continue
 
             const distance = Phaser.Math.Distance.Between(
                 this.playerContainer.x,
@@ -310,7 +244,7 @@ export class GameScene extends Phaser.Scene {
         }
 
         // Update indicators
-        this.trashItems.forEach((trash) => {
+        this.spawnManager.getTrashItems().forEach((trash) => {
             trash.showIndicator(trash === closestTrash)
         })
 
@@ -321,6 +255,11 @@ export class GameScene extends Phaser.Scene {
         if (!this.carriedBin || !this.nearbyTrash) return
 
         const trash = this.nearbyTrash
+
+        // Check if trash can be picked up (animation complete)
+        if (!trash.canPickup()) {
+            return
+        }
 
         // Check if bin is full
         if (this.carriedBin.isFull()) {
@@ -334,20 +273,14 @@ export class GameScene extends Phaser.Scene {
             const added = this.carriedBin.addItem()
             if (added) {
                 trash.collect()
-                const index = this.trashItems.indexOf(trash)
-                if (index > -1) {
-                    this.trashItems.splice(index, 1)
-                }
+                this.spawnManager.removeTrash(trash)
                 this.nearbyTrash = null
                 // TODO: Add visual/audio feedback
             }
         } else {
             // Wrong trash! Lose HP
             trash.collect()
-            const index = this.trashItems.indexOf(trash)
-            if (index > -1) {
-                this.trashItems.splice(index, 1)
-            }
+            this.spawnManager.removeTrash(trash)
             this.nearbyTrash = null
             this.player.takeDamage(1)
 

@@ -8,6 +8,7 @@ export class Trash extends Phaser.Physics.Arcade.Sprite {
     private indicator: Phaser.GameObjects.Image | null = null
     public isNearPlayer = false
     private hoverOffset = 0 // For animation
+    private canBePickedUp = true // Can this trash be picked up yet?
 
     constructor(
         scene: Phaser.Scene,
@@ -44,10 +45,24 @@ export class Trash extends Phaser.Physics.Arcade.Sprite {
     }
 
     public showIndicator(show: boolean): void {
-        this.isNearPlayer = show
+        // Only show indicator if trash can be picked up
+        this.isNearPlayer = show && this.canBePickedUp
         if (this.indicator) {
-            this.indicator.setVisible(show)
+            this.indicator.setVisible(this.isNearPlayer)
         }
+    }
+
+    public setPickupEnabled(enabled: boolean): void {
+        this.canBePickedUp = enabled
+        // Hide indicator if disabling pickup
+        if (!enabled && this.indicator) {
+            this.indicator.setVisible(false)
+            this.isNearPlayer = false
+        }
+    }
+
+    public canPickup(): boolean {
+        return this.canBePickedUp && !this.isCollected
     }
 
     public updateIndicator(): void {
