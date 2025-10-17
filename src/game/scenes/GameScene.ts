@@ -55,17 +55,24 @@ export class GameScene extends Phaser.Scene {
         this.playerContainer.setDepth(10) // Player layer depth
         this.playerContainer.add(this.player)
 
-        // Give player reference to its container so it can move it
-        this.player.setContainer(this.playerContainer)
-
         // Add physics body to container and set up collision with terrain
         this.physics.add.existing(this.playerContainer)
         const containerBody = this.playerContainer
             .body as Phaser.Physics.Arcade.Body
         if (containerBody) {
-            containerBody.setSize(32, 32) // Adjust collision box size
-            containerBody.setOffset(-16, -16) // Center it
+            // Collision box configuration
+            // setSize(width, height) - Size of the collision box
+            // setOffset(x, y) - Position relative to container center
+            //   Negative Y moves box down (toward feet)
+            //   Example: setOffset(0, 16) moves box 16px down from center
+            containerBody.setSize(50, 16) // Width x Height of collision box
+            containerBody.setOffset(-25, 40) // X and Y offset from container center
+            containerBody.setCollideWorldBounds(true) // Keep player in world
         }
+
+        // Give player reference to its container so it can move it (after physics is added)
+        this.player.setContainer(this.playerContainer)
+
         this.tilemapManager.addCollision(this.playerContainer)
 
         // Set up camera to follow the container instead

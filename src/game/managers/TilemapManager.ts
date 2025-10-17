@@ -36,9 +36,22 @@ export class TilemapManager {
         // Set layer depth (below player)
         this.terrainLayer?.setDepth(1)
 
-        // Set up collision for water tiles
+        // Set up collision for tiles with collision objects defined in Tiled
         if (this.terrainLayer) {
-            this.terrainLayer.setCollisionByProperty({ collides: true })
+            // Use collision shapes from Tiled (objectgroup collision)
+            this.terrainLayer.setCollisionFromCollisionGroup()
+            console.log('Set up collision from Tiled collision objects')
+
+            // Debug: Count tiles with collision
+            let collisionCount = 0
+            this.terrainLayer.layer.data.forEach((row) => {
+                row.forEach((tile) => {
+                    if (tile.collides) {
+                        collisionCount++
+                    }
+                })
+            })
+            console.log(`Total tiles with collision enabled: ${collisionCount}`)
         }
 
         // Extract grass tiles from wangset and set spawn property

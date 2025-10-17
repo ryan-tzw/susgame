@@ -126,23 +126,11 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
             velocityY *= Math.sqrt(0.5)
         }
 
-        // Move the container
-        const delta = this.scene.game.loop.delta / 1000 // Convert to seconds
-        this.container.x += velocityX * delta
-        this.container.y += velocityY * delta
-
-        // Keep container within world bounds (use physics world bounds)
-        const worldBounds = this.scene.physics.world.bounds
-        this.container.x = Phaser.Math.Clamp(
-            this.container.x,
-            0,
-            worldBounds.width
-        )
-        this.container.y = Phaser.Math.Clamp(
-            this.container.y,
-            0,
-            worldBounds.height
-        )
+        // Apply velocity to the container's physics body
+        const containerBody = this.container.body as Phaser.Physics.Arcade.Body
+        if (containerBody) {
+            containerBody.setVelocity(velocityX, velocityY)
+        }
 
         // Play appropriate animation
         if (isMoving) {
