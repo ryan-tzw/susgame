@@ -131,11 +131,18 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
         this.container.x += velocityX * delta
         this.container.y += velocityY * delta
 
-        // Keep container within world bounds
-        const worldWidth = 3840
-        const worldHeight = 2160
-        this.container.x = Phaser.Math.Clamp(this.container.x, 0, worldWidth)
-        this.container.y = Phaser.Math.Clamp(this.container.y, 0, worldHeight)
+        // Keep container within world bounds (use physics world bounds)
+        const worldBounds = this.scene.physics.world.bounds
+        this.container.x = Phaser.Math.Clamp(
+            this.container.x,
+            0,
+            worldBounds.width
+        )
+        this.container.y = Phaser.Math.Clamp(
+            this.container.y,
+            0,
+            worldBounds.height
+        )
 
         // Play appropriate animation
         if (isMoving) {
