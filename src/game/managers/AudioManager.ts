@@ -5,6 +5,7 @@ import Phaser from 'phaser'
  */
 export class AudioManager {
     private static instance: AudioManager | null = null
+    private static readonly VOLUME_STORAGE_KEY = 'susgame_music_volume'
     private scene: Phaser.Scene
     private music: Phaser.Sound.BaseSound | null = null
 
@@ -20,6 +21,43 @@ export class AudioManager {
 
     constructor(scene: Phaser.Scene) {
         this.scene = scene
+        // Load saved volume from localStorage
+        this.loadVolumeFromStorage()
+    }
+
+    /**
+     * Load saved volume from localStorage
+     */
+    private loadVolumeFromStorage(): void {
+        try {
+            const savedVolume = localStorage.getItem(
+                AudioManager.VOLUME_STORAGE_KEY
+            )
+            if (savedVolume !== null) {
+                const volume = parseFloat(savedVolume)
+                if (!isNaN(volume) && volume >= 0 && volume <= 1) {
+                    this.userMusicVolume = volume
+                }
+            }
+        } catch (error) {
+            // localStorage might be disabled or unavailable
+            console.warn('Failed to load volume from localStorage:', error)
+        }
+    }
+
+    /**
+     * Save volume to localStorage
+     */
+    private saveVolumeToStorage(): void {
+        try {
+            localStorage.setItem(
+                AudioManager.VOLUME_STORAGE_KEY,
+                this.userMusicVolume.toString()
+            )
+        } catch (error) {
+            // localStorage might be disabled or unavailable
+            console.warn('Failed to save volume to localStorage:', error)
+        }
     }
 
     /**
@@ -169,6 +207,7 @@ export class AudioManager {
     setUserMusicVolume(volume: number): void {
         this.userMusicVolume = Phaser.Math.Clamp(volume, 0, 1)
         this.updateMusicVolume()
+        this.saveVolumeToStorage() // Persist to localStorage
     }
 
     /**

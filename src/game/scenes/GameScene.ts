@@ -136,16 +136,16 @@ export class GameScene extends Phaser.Scene {
         // Spawn initial trash items (start with less, more will spawn over time)
         this.spawnManager.spawnInitialTrash(GameConstants.SPAWN.INITIAL_COUNT)
 
-        // DEBUG: Add key to instantly win (press V key for "Victory")
-        const debugWinKey = this.input.keyboard?.addKey(
-            Phaser.Input.Keyboard.KeyCodes.V
-        )
-        if (debugWinKey) {
-            debugWinKey.on('down', () => {
-                console.log('DEBUG: Setting score to win threshold')
-                this.uiManager.setScore(GameConstants.SCORE.WIN_THRESHOLD)
-            })
-        }
+        // // DEBUG: Add key to instantly win (press V key for "Victory")
+        // const debugWinKey = this.input.keyboard?.addKey(
+        //     Phaser.Input.Keyboard.KeyCodes.V
+        // )
+        // if (debugWinKey) {
+        //     debugWinKey.on('down', () => {
+        //         console.log('DEBUG: Setting score to win threshold')
+        //         this.uiManager.setScore(GameConstants.SCORE.WIN_THRESHOLD)
+        //     })
+        // }
     }
 
     update(): void {

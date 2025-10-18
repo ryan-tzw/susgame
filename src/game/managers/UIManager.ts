@@ -336,9 +336,12 @@ export class UIManager {
 
         const notification = this.scene.add
             .text(centerX, y, message, {
-                fontSize: '24px',
+                fontSize: '32px',
                 color: color,
                 padding: { x: 20, y: 10 },
+                fontStyle: 'bold',
+                stroke: '#000000',
+                strokeThickness: 2,
             })
             .setOrigin(0.5)
             .setScrollFactor(0)

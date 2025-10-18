@@ -226,16 +226,14 @@ export class MainMenuScene extends Phaser.Scene {
     private createVolumeSlider(): void {
         const sliderWidth = 200
         const sliderHeight = 10
-        const sliderX = sliderWidth + 40
+        const sliderX = this.cameras.main.width / 2
         const sliderY = this.cameras.main.height - 50
 
         // Volume label - using text instead of emoji for consistency
         this.add
-            .text(sliderX - sliderWidth / 2 - 60, sliderY, 'Music:', {
+            .text(sliderX - sliderWidth / 2 - 75, sliderY, '🎵 Music:', {
                 fontSize: '20px',
-                color: '#ffffff',
-                stroke: '#000000',
-                strokeThickness: 2,
+                color: '#000',
             })
             .setOrigin(0.5)
 
