@@ -1,7 +1,6 @@
 import Phaser from 'phaser'
 import { BootScene } from '../scenes/BootScene'
 import { MainMenuScene } from '../scenes/MainMenuScene'
-import { PreloadScene } from '../scenes/PreloadScene'
 import { GameScene } from '../scenes/GameScene'
 
 export const gameConfig: Phaser.Types.Core.GameConfig = {
@@ -22,7 +21,7 @@ export const gameConfig: Phaser.Types.Core.GameConfig = {
             debug: false, // Enable debug rendering to see collision boxes
         },
     },
-    scene: [BootScene, MainMenuScene, PreloadScene, GameScene],
+    scene: [BootScene, MainMenuScene, GameScene],
     scale: {
         mode: Phaser.Scale.FIT,
         autoCenter: Phaser.Scale.CENTER_BOTH,

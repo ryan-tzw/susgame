@@ -179,7 +179,7 @@ export class MainMenuScene extends Phaser.Scene {
             // Start circle shrink transition
             SceneTransitions.circleWipeOut(this, {
                 onComplete: () => {
-                    this.scene.start('PreloadScene')
+                    this.scene.start('GameScene')
                 },
             })
         })
@@ -201,7 +201,7 @@ export class MainMenuScene extends Phaser.Scene {
             SceneTransitions.circleWipeOut(this, {
                 duration: 800,
                 onComplete: () => {
-                    this.scene.start('PreloadScene')
+                    this.scene.start('GameScene')
                 },
             })
         }

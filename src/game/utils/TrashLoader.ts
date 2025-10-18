@@ -15,31 +15,7 @@ export interface TrashAsset {
  */
 export class TrashLoader {
     /**
-     * Get all trash assets that should be loaded
-     * Note: In a real scenario, you'd dynamically read the folder.
-     * For now, this needs to be manually updated when adding new trash images.
-     */
-    static getTrashAssets(): TrashAsset[] {
-        // TODO: Add your actual trash PNG filenames here
-        // Example format:
-        const assets: TrashAsset[] = [
-            // Green bin trash (waste-to-energy)
-            // { key: 'trash_green_banana', path: 'assets/sprites/trash/green/banana.png', binType: 'green' },
-            // { key: 'trash_green_apple', path: 'assets/sprites/trash/green/apple.png', binType: 'green' },
-            // Blue bin trash (recycling)
-            // { key: 'trash_blue_bottle', path: 'assets/sprites/trash/blue/bottle.png', binType: 'blue' },
-            // { key: 'trash_blue_paper', path: 'assets/sprites/trash/blue/paper.png', binType: 'blue' },
-            // Yellow bin trash (donation)
-            // { key: 'trash_yellow_shirt', path: 'assets/sprites/trash/yellow/shirt.png', binType: 'yellow' },
-            // { key: 'trash_yellow_toy', path: 'assets/sprites/trash/yellow/toy.png', binType: 'yellow' },
-        ]
-
-        return assets
-    }
-
-    /**
-     * Automatically generates trash asset list from folder contents
-     * Call this after you add PNG files to the trash folders
+     * Generates trash asset list from filenames
      */
     static generateFromFiles(
         greenFiles: string[],
