@@ -6,7 +6,6 @@ export type BinType = 'green' | 'blue' | 'yellow'
 export class Bin extends Phaser.Physics.Arcade.Sprite {
     public binType: BinType
     public isPickedUp = false
-    private player: Phaser.Physics.Arcade.Sprite | null = null
     private playerContainer: Phaser.GameObjects.Container | null = null
     public itemCount = 0
     public maxCapacity = GameConstants.BIN.MAX_CAPACITY
@@ -84,12 +83,8 @@ export class Bin extends Phaser.Physics.Arcade.Sprite {
         this.capacityMeter.setVisible(this.itemCount > 0)
     }
 
-    public pickUp(
-        player: Phaser.Physics.Arcade.Sprite,
-        container: Phaser.GameObjects.Container
-    ): void {
+    public pickUp(container: Phaser.GameObjects.Container): void {
         this.isPickedUp = true
-        this.player = player
 
         // Disable physics when picked up
         if (this.body) {
@@ -159,11 +154,7 @@ export class Bin extends Phaser.Physics.Arcade.Sprite {
         this.updateCapacityMeter()
     }
 
-    public setPlayer(
-        player: Phaser.Physics.Arcade.Sprite,
-        container: Phaser.GameObjects.Container
-    ): void {
-        this.player = player
+    public setPlayer(container: Phaser.GameObjects.Container): void {
         this.playerContainer = container
     }
 

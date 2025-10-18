@@ -118,10 +118,7 @@ export class GameScene extends Phaser.Scene {
         )
 
         // Spawn bins using spawn manager
-        this.bins = this.spawnManager.spawnBins(
-            this.player,
-            this.playerContainer
-        )
+        this.bins = this.spawnManager.spawnBins(this.playerContainer)
 
         // Spawn dropoff boxes using spawn manager
         this.dropoffBoxes = this.spawnManager.spawnDropoffBoxes()
@@ -427,7 +424,7 @@ export class GameScene extends Phaser.Scene {
 
                 if (distance < GameConstants.PLAYER.PICKUP_RANGE) {
                     // Pick up the bin
-                    bin.pickUp(this.player, this.playerContainer)
+                    bin.pickUp(this.playerContainer)
                     this.player.pickUpBin(bin.binType)
                     this.carriedBin = bin
                     break

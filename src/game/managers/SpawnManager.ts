@@ -3,7 +3,6 @@ import { Bin, BinType } from '../entities/Bin'
 import { Trash } from '../entities/Trash'
 import { DropoffBox } from '../entities/DropoffBox'
 import { TrashAsset } from '../utils/TrashLoader'
-import { Player } from '../entities/Player'
 import { GameConstants } from '../config/GameConstants'
 
 export class SpawnManager {
@@ -211,10 +210,7 @@ export class SpawnManager {
     /**
      * Create bins at specific positions
      */
-    public spawnBins(
-        player: Player,
-        playerContainer: Phaser.GameObjects.Container
-    ): Bin[] {
+    public spawnBins(playerContainer: Phaser.GameObjects.Container): Bin[] {
         const bins: Bin[] = []
         const binStartX = GameConstants.BIN.SPAWN.START_X
         const binStartY = GameConstants.BIN.SPAWN.START_Y
@@ -228,7 +224,7 @@ export class SpawnManager {
                 binStartY + binSpacing * index,
                 type
             )
-            bin.setPlayer(player, playerContainer)
+            bin.setPlayer(playerContainer)
             bins.push(bin)
         })
 

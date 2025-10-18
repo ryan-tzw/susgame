@@ -46,71 +46,84 @@ export class AudioManager {
     playSfx(key: string, volume?: number): void {
         if (this.isMuted) return
 
-        const sfx = this.scene.sound.add(key, {
-            volume: volume ?? this.sfxVolume,
-        })
-        sfx.play()
+        // TODO: Temporarily disabled - audio files not added yet
+        console.log(
+            `[SFX] Would play: ${key} at volume ${volume ?? this.sfxVolume}`
+        )
 
-        // Auto-destroy after playing to prevent memory leaks
-        sfx.once('complete', () => {
-            sfx.destroy()
-        })
+        // const sfx = this.scene.sound.add(key, {
+        //     volume: volume ?? this.sfxVolume,
+        // })
+        // sfx.play()
+
+        // // Auto-destroy after playing to prevent memory leaks
+        // sfx.once('complete', () => {
+        //     sfx.destroy()
+        // })
     }
 
     /**
      * Play trash pickup sound
      */
     playTrashPickup(): void {
-        this.playSfx('trash_pickup')
+        console.log('[SFX] Trash pickup sound')
+        // this.playSfx('trash_pickup')
     }
 
     /**
      * Play correct bin deposit sound
      */
     playCorrectDeposit(): void {
-        this.playSfx('correct_deposit')
+        console.log('[SFX] Correct deposit sound')
+        // this.playSfx('correct_deposit')
     }
 
     /**
      * Play wrong bin deposit sound
      */
     playWrongDeposit(): void {
-        this.playSfx('wrong_deposit')
+        console.log('[SFX] Wrong deposit sound')
+        // this.playSfx('wrong_deposit')
     }
 
     /**
      * Play player damage sound
      */
     playPlayerDamage(): void {
-        this.playSfx('player_damage')
+        console.log('[SFX] Player damage sound')
+        // this.playSfx('player_damage')
     }
 
     /**
      * Play button hover sound
      */
     playButtonHover(): void {
-        this.playSfx('button_hover', 0.3)
+        console.log('[SFX] Button hover sound')
+        // this.playSfx('button_hover', 0.3)
     }
 
     /**
      * Play button click sound
      */
     playButtonClick(): void {
-        this.playSfx('button_click', 0.5)
+        console.log('[SFX] Button click sound')
+        // this.playSfx('button_click', 0.5)
     }
 
     /**
      * Play victory sound
      */
     playVictory(): void {
-        this.playSfx('victory', 0.8)
+        console.log('[SFX] Victory sound')
+        // this.playSfx('victory', 0.8)
     }
 
     /**
      * Play game over sound
      */
     playGameOver(): void {
-        this.playSfx('game_over', 0.8)
+        console.log('[SFX] Game over sound')
+        // this.playSfx('game_over', 0.8)
     }
 
     /**
@@ -119,11 +132,10 @@ export class AudioManager {
     setMusicVolume(volume: number): void {
         this.musicVolume = Phaser.Math.Clamp(volume, 0, 1)
         if (this.music && !this.isMuted) {
-            ;(
-                this.music as
-                    | Phaser.Sound.WebAudioSound
-                    | Phaser.Sound.HTML5AudioSound
-            ).setVolume(this.musicVolume)
+            const sound = this.music as
+                | Phaser.Sound.WebAudioSound
+                | Phaser.Sound.HTML5AudioSound
+            sound.setVolume(this.musicVolume)
         }
     }
 
@@ -140,11 +152,10 @@ export class AudioManager {
     toggleMute(): void {
         this.isMuted = !this.isMuted
         if (this.music) {
-            ;(
-                this.music as
-                    | Phaser.Sound.WebAudioSound
-                    | Phaser.Sound.HTML5AudioSound
-            ).setVolume(this.isMuted ? 0 : this.musicVolume)
+            const sound = this.music as
+                | Phaser.Sound.WebAudioSound
+                | Phaser.Sound.HTML5AudioSound
+            sound.setVolume(this.isMuted ? 0 : this.musicVolume)
         }
     }
 
@@ -154,11 +165,10 @@ export class AudioManager {
     setMute(muted: boolean): void {
         this.isMuted = muted
         if (this.music) {
-            ;(
-                this.music as
-                    | Phaser.Sound.WebAudioSound
-                    | Phaser.Sound.HTML5AudioSound
-            ).setVolume(this.isMuted ? 0 : this.musicVolume)
+            const sound = this.music as
+                | Phaser.Sound.WebAudioSound
+                | Phaser.Sound.HTML5AudioSound
+            sound.setVolume(this.isMuted ? 0 : this.musicVolume)
         }
     }
 

@@ -4,7 +4,6 @@ import { BinType } from './Bin'
 export class DropoffBox extends Phaser.GameObjects.Rectangle {
     public boxType: BinType
     public isActive = false
-    private decorationImage: Phaser.GameObjects.Image
 
     constructor(
         scene: Phaser.Scene,
@@ -33,7 +32,7 @@ export class DropoffBox extends Phaser.GameObjects.Rectangle {
 
         // Add decoration image next to the box
         const decorationOffset = 250
-        this.decorationImage = scene.add
+        scene.add
             .image(x + decorationOffset, y, decorationImageKey)
             .setDepth(5)
             .setScale(1) // Adjust as needed
