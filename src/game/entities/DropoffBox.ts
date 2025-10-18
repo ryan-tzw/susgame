@@ -1,9 +1,11 @@
 import Phaser from 'phaser'
 import { BinType } from './Bin'
 
-export class DropoffBox extends Phaser.GameObjects.Rectangle {
+export class DropoffBox extends Phaser.GameObjects.Container {
     public boxType: BinType
     public isActive = false
+    private boxSize: number
+    private boxGraphics: Phaser.GameObjects.Graphics
 
     constructor(
         scene: Phaser.Scene,
@@ -12,6 +14,11 @@ export class DropoffBox extends Phaser.GameObjects.Rectangle {
         boxType: BinType,
         decorationImageKey: string
     ) {
+        super(scene, x, y)
+
+        this.boxType = boxType
+        this.boxSize = 120
+
         // Pastel colors for each box type
         const colorMap = {
             green: 0xb8f4b8, // Pastel green
@@ -19,10 +26,19 @@ export class DropoffBox extends Phaser.GameObjects.Rectangle {
             yellow: 0xfff4b8, // Pastel yellow
         }
 
-        const boxSize = 120
-        super(scene, x, y, boxSize, boxSize, colorMap[boxType])
+        // Create rounded rectangle using Graphics
+        this.boxGraphics = scene.add.graphics()
+        this.boxGraphics.fillStyle(colorMap[boxType], 1)
+        this.boxGraphics.fillRoundedRect(
+            -this.boxSize / 2,
+            -this.boxSize / 2,
+            this.boxSize,
+            this.boxSize,
+            20 // Corner radius
+        )
 
-        this.boxType = boxType
+        // Add graphics to container
+        this.add(this.boxGraphics)
 
         // Add to scene
         scene.add.existing(this)
@@ -40,7 +56,9 @@ export class DropoffBox extends Phaser.GameObjects.Rectangle {
 
     public checkBinOverlap(binX: number, binY: number): boolean {
         // Check if bin position is within dropoff box bounds
-        const bounds = this.getBounds()
-        return bounds.contains(binX, binY)
+        const halfSize = this.boxSize / 2
+        const isWithinX = binX >= this.x - halfSize && binX <= this.x + halfSize
+        const isWithinY = binY >= this.y - halfSize && binY <= this.y + halfSize
+        return isWithinX && isWithinY
     }
 }
