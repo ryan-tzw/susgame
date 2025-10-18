@@ -1,6 +1,13 @@
 import Phaser from 'phaser'
 import { GameConstants } from '../config/GameConstants'
 
+// Player animation states
+enum PlayerState {
+    IDLE = 'idle',
+    WALKING = 'walking',
+    SPRINTING = 'sprinting',
+}
+
 export class Player extends Phaser.Physics.Arcade.Sprite {
     private cursors: Phaser.Types.Input.Keyboard.CursorKeys | null = null
     private wasdKeys: {
@@ -18,6 +25,7 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
     public currentBinType: string | null = null
     private container: Phaser.GameObjects.Container | null = null
     private controlsEnabled = true // Flag to enable/disable player controls
+    private currentState: PlayerState = PlayerState.IDLE
 
     constructor(scene: Phaser.Scene, x: number, y: number) {
         super(scene, x, y, 'player', 'player_0.png')
@@ -90,6 +98,31 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
     }
 
     /**
+     * Change player animation state
+     */
+    private changeState(newState: PlayerState): void {
+        this.currentState = newState
+
+        switch (newState) {
+            case PlayerState.IDLE:
+                this.play('player-idle')
+                break
+            case PlayerState.WALKING:
+                this.play({
+                    key: 'player-walk-down',
+                    frameRate: 6,
+                })
+                break
+            case PlayerState.SPRINTING:
+                this.play({
+                    key: 'player-walk-down',
+                    frameRate: 10,
+                })
+                break
+        }
+    }
+
+    /**
      * Enable or disable player controls
      */
     public setControlsEnabled(enabled: boolean): void {
@@ -156,25 +189,19 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
             containerBody.setVelocity(velocityX, velocityY)
         }
 
-        // Play appropriate animation
-        if (isMoving) {
-            // Adjust animation speed based on sprinting
-            const animSpeed = isSprinting ? 10 : 6
-
-            // Only start animation if not already playing
-            if (this.anims.currentAnim?.key !== 'player-walk-down') {
-                this.play('player-walk-down')
-            }
-
-            // Update animation speed
-            if (this.anims.currentAnim) {
-                this.anims.currentAnim.frameRate = animSpeed
-            }
+        // Determine desired state based on input
+        let desiredState: PlayerState
+        if (!isMoving) {
+            desiredState = PlayerState.IDLE
+        } else if (isSprinting) {
+            desiredState = PlayerState.SPRINTING
         } else {
-            // Stop animation and show idle frame
-            if (this.anims.currentAnim?.key !== 'player-idle') {
-                this.play('player-idle')
-            }
+            desiredState = PlayerState.WALKING
+        }
+
+        // Only change animation if state changed
+        if (this.currentState !== desiredState) {
+            this.changeState(desiredState)
         }
     }
 
@@ -203,5 +230,7 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
         this.currentBinType = null
         this.hp = this.maxHp
         this.controlsEnabled = true
+        this.currentState = PlayerState.IDLE
+        this.changeState(PlayerState.IDLE)
     }
 }
