@@ -9,8 +9,8 @@ export class PreloadScene extends Phaser.Scene {
     }
 
     preload(): void {
-        // Create loading bar
-        this.createLoadingBar()
+        // Don't show loading bar to prevent flash when transitioning
+        // this.createLoadingBar()
 
         // Load player atlas
         this.load.atlas(
@@ -59,63 +59,6 @@ export class PreloadScene extends Phaser.Scene {
 
         // Start the game scene
         this.scene.start('GameScene')
-    }
-
-    private createLoadingBar(): void {
-        const width = this.cameras.main.width
-        const height = this.cameras.main.height
-
-        // Background
-        const background = this.add.rectangle(
-            width / 2,
-            height / 2,
-            400,
-            50,
-            0x222222
-        )
-
-        // Loading bar
-        const loadingBar = this.add.rectangle(
-            width / 2 - 200 + 10,
-            height / 2,
-            0,
-            30,
-            0x4ade80
-        )
-        loadingBar.setOrigin(0, 0.5)
-
-        // Loading text
-        const loadingText = this.add.text(
-            width / 2,
-            height / 2 - 50,
-            'Loading...',
-            {
-                fontSize: '24px',
-                color: '#ffffff',
-            }
-        )
-        loadingText.setOrigin(0.5)
-
-        // Percentage text
-        const percentText = this.add.text(width / 2, height / 2, '0%', {
-            fontSize: '18px',
-            color: '#ffffff',
-        })
-        percentText.setOrigin(0.5)
-
-        // Update loading bar as assets load
-        this.load.on('progress', (value: number) => {
-            loadingBar.width = 380 * value
-            percentText.setText(`${Math.floor(value * 100)}%`)
-        })
-
-        // Clean up when loading is complete
-        this.load.on('complete', () => {
-            loadingBar.destroy()
-            background.destroy()
-            loadingText.destroy()
-            percentText.destroy()
-        })
     }
 
     private loadTrashSprites(): void {

@@ -9,6 +9,7 @@ import { InputManager, GameAction } from '../managers/InputManager'
 import { UIManager } from '../managers/UIManager'
 import { GameStateManager } from '../managers/GameStateManager'
 import { GameConstants } from '../config/GameConstants'
+import { SceneTransitions } from '../utils/SceneTransitions'
 
 export class GameScene extends Phaser.Scene {
     private player!: Player
@@ -85,6 +86,9 @@ export class GameScene extends Phaser.Scene {
         this.cameras.main.setBounds(0, 0, worldWidth, worldHeight)
         this.cameras.main.setZoom(1)
         this.cameras.main.setRoundPixels(true) // Round pixel positions to prevent sub-pixel gaps
+
+        // Play circle wipe in transition when entering the game
+        SceneTransitions.circleWipeIn(this)
 
         // Set up input manager and subscribe to actions
         this.inputManager = new InputManager(this)
