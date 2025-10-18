@@ -14,7 +14,7 @@ export class MainMenuScene extends Phaser.Scene {
 
     create(): void {
         // Initialize audio manager (music already playing from BootScene)
-        this.audioManager = new AudioManager(this)
+        this.audioManager = AudioManager.getInstance(this)
         const centerX = this.cameras.main.width / 2
         const centerY = this.cameras.main.height / 2
         const width = this.cameras.main.width
@@ -209,6 +209,9 @@ export class MainMenuScene extends Phaser.Scene {
         spaceKey?.on('down', startWithTransition)
         enterKey?.on('down', startWithTransition)
 
+        // Add volume slider in bottom-left corner
+        this.createVolumeSlider()
+
         // Add a subtle title animation
         this.tweens.add({
             targets: title,
@@ -217,6 +220,129 @@ export class MainMenuScene extends Phaser.Scene {
             yoyo: true,
             repeat: -1,
             ease: 'Sine.easeInOut',
+        })
+    }
+
+    private createVolumeSlider(): void {
+        const sliderWidth = 200
+        const sliderHeight = 10
+        const sliderX = sliderWidth + 40
+        const sliderY = this.cameras.main.height - 50
+
+        // Volume label - using text instead of emoji for consistency
+        this.add
+            .text(sliderX - sliderWidth / 2 - 60, sliderY, 'Music:', {
+                fontSize: '20px',
+                color: '#ffffff',
+                stroke: '#000000',
+                strokeThickness: 2,
+            })
+            .setOrigin(0.5)
+
+        // Slider track (background)
+        const sliderTrack = this.add.graphics()
+        sliderTrack.fillStyle(0x555555, 1)
+        sliderTrack.fillRoundedRect(
+            sliderX - sliderWidth / 2,
+            sliderY - sliderHeight / 2,
+            sliderWidth,
+            sliderHeight,
+            sliderHeight / 2
+        )
+
+        // Slider fill (shows current volume)
+        const sliderFill = this.add.graphics()
+        const updateSliderFill = (percentage: number) => {
+            sliderFill.clear()
+            sliderFill.fillStyle(0x2ecc71, 1)
+            sliderFill.fillRoundedRect(
+                sliderX - sliderWidth / 2,
+                sliderY - sliderHeight / 2,
+                sliderWidth * percentage,
+                sliderHeight,
+                sliderHeight / 2
+            )
+        }
+
+        // Get initial volume
+        const initialVolume = this.audioManager.getUserMusicVolume()
+        updateSliderFill(initialVolume)
+
+        // Volume percentage text
+        const volumeText = this.add
+            .text(
+                sliderX + sliderWidth / 2 + 40,
+                sliderY,
+                `${Math.round(initialVolume * 100)}%`,
+                {
+                    fontSize: '20px',
+                    color: '#ffffff',
+                    stroke: '#000000',
+                    strokeThickness: 2,
+                }
+            )
+            .setOrigin(0.5)
+
+        // Slider handle (draggable circle)
+        const handleRadius = 12
+        const sliderHandle = this.add.circle(
+            sliderX - sliderWidth / 2 + sliderWidth * initialVolume,
+            sliderY,
+            handleRadius,
+            0xffffff
+        )
+        sliderHandle.setStrokeStyle(2, 0x2ecc71)
+        sliderHandle.setInteractive({ useHandCursor: true, draggable: true })
+        sliderHandle.setDepth(10) // Ensure handle is above track zone
+
+        // Update volume function
+        const updateVolume = (newX: number) => {
+            const minX = sliderX - sliderWidth / 2
+            const maxX = sliderX + sliderWidth / 2
+            const clampedX = Phaser.Math.Clamp(newX, minX, maxX)
+
+            sliderHandle.x = clampedX
+
+            // Calculate volume (0 to 1)
+            const volume = (clampedX - minX) / sliderWidth
+
+            // Update audio manager
+            this.audioManager.setUserMusicVolume(volume)
+
+            // Update visual fill
+            updateSliderFill(volume)
+
+            // Update percentage text
+            volumeText.setText(`${Math.round(volume * 100)}%`)
+        }
+
+        // Handle drag
+        this.input.setDraggable(sliderHandle)
+        sliderHandle.on('drag', (pointer: Phaser.Input.Pointer) => {
+            updateVolume(pointer.x)
+        })
+
+        // Click on track to jump to position
+        const sliderZone = this.add
+            .zone(sliderX, sliderY, sliderWidth, sliderHeight + 20)
+            .setInteractive({ useHandCursor: true })
+        sliderZone.setDepth(5) // Below handle but above track
+
+        sliderZone.on('pointerdown', (pointer: Phaser.Input.Pointer) => {
+            // Only handle clicks, not drags from the handle
+            if (pointer.downElement === sliderHandle) {
+                return
+            }
+            updateVolume(pointer.x)
+        })
+
+        // Hover effect on handle
+        sliderHandle.on('pointerover', () => {
+            sliderHandle.setScale(1.2)
+        })
+
+        sliderHandle.on('pointerout', () => {
+            sliderHandle.setScale(1)
         })
     }
 }

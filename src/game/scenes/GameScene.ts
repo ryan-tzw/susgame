@@ -37,7 +37,7 @@ export class GameScene extends Phaser.Scene {
         this.stateManager = new GameStateManager()
 
         // Initialize audio manager (music already playing from BootScene)
-        this.audioManager = new AudioManager(this)
+        this.audioManager = AudioManager.getInstance(this)
 
         // Get trash assets from registry (loaded in PreloadScene)
         const trashAssets = this.registry.get('trashAssets') || []

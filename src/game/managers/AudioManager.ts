@@ -4,14 +4,48 @@ import Phaser from 'phaser'
  * Manages all audio for the game including music and sound effects
  */
 export class AudioManager {
+    private static instance: AudioManager | null = null
     private scene: Phaser.Scene
     private music: Phaser.Sound.BaseSound | null = null
-    private sfxVolume = 0.7
-    private musicVolume = 0.5
+
+    // SFX settings
+    private sfxVolume = 0.5
+
+    // Music volume settings - two-tier system
+    private baseMusicVolume = 0.15 // Internal base level (prevents ear-blasting)
+    private userMusicVolume = 0.5 // User-adjustable 0-1 (0% to 100%)
+    private maxMusicMultiplier = 2.0 // Multiplier for 100% (0.15 * 2 = 0.3)
+
     private isMuted = false
 
     constructor(scene: Phaser.Scene) {
         this.scene = scene
+    }
+
+    /**
+     * Get or create global AudioManager instance
+     */
+    static getInstance(scene: Phaser.Scene): AudioManager {
+        if (!AudioManager.instance) {
+            AudioManager.instance = new AudioManager(scene)
+        } else {
+            // Update scene reference if needed
+            AudioManager.instance.scene = scene
+        }
+        return AudioManager.instance
+    }
+
+    /**
+     * Calculate actual music volume from base and user settings
+     */
+    private getActualMusicVolume(): number {
+        // User volume acts as a multiplier on the base volume
+        // 0% (0.0) = 0, 50% (0.5) = base volume, 100% (1.0) = base * maxMultiplier
+        return (
+            this.baseMusicVolume *
+            this.userMusicVolume *
+            this.maxMusicMultiplier
+        )
     }
 
     /**
@@ -24,7 +58,7 @@ export class AudioManager {
         // Play new music
         this.music = this.scene.sound.add(key, {
             loop,
-            volume: this.isMuted ? 0 : this.musicVolume,
+            volume: this.isMuted ? 0 : this.getActualMusicVolume(),
         })
         this.music.play()
     }
@@ -127,15 +161,40 @@ export class AudioManager {
     }
 
     /**
-     * Set music volume (0 to 1)
+     * Set user music volume (0 to 1, where 0.5 = base volume)
+     * 0.0 (0%) = silent
+     * 0.5 (50%) = base volume (default)
+     * 1.0 (100%) = base volume * maxMultiplier
      */
-    setMusicVolume(volume: number): void {
-        this.musicVolume = Phaser.Math.Clamp(volume, 0, 1)
+    setUserMusicVolume(volume: number): void {
+        this.userMusicVolume = Phaser.Math.Clamp(volume, 0, 1)
+        this.updateMusicVolume()
+    }
+
+    /**
+     * Get current user music volume (0 to 1)
+     */
+    getUserMusicVolume(): number {
+        return this.userMusicVolume
+    }
+
+    /**
+     * Set base music volume (internal level, not exposed to user)
+     */
+    setBaseMusicVolume(volume: number): void {
+        this.baseMusicVolume = Phaser.Math.Clamp(volume, 0, 1)
+        this.updateMusicVolume()
+    }
+
+    /**
+     * Update the actual playing music volume
+     */
+    private updateMusicVolume(): void {
         if (this.music && !this.isMuted) {
             const sound = this.music as
                 | Phaser.Sound.WebAudioSound
                 | Phaser.Sound.HTML5AudioSound
-            sound.setVolume(this.musicVolume)
+            sound.setVolume(this.getActualMusicVolume())
         }
     }
 
@@ -155,7 +214,7 @@ export class AudioManager {
             const sound = this.music as
                 | Phaser.Sound.WebAudioSound
                 | Phaser.Sound.HTML5AudioSound
-            sound.setVolume(this.isMuted ? 0 : this.musicVolume)
+            sound.setVolume(this.isMuted ? 0 : this.getActualMusicVolume())
         }
     }
 
@@ -168,7 +227,7 @@ export class AudioManager {
             const sound = this.music as
                 | Phaser.Sound.WebAudioSound
                 | Phaser.Sound.HTML5AudioSound
-            sound.setVolume(this.isMuted ? 0 : this.musicVolume)
+            sound.setVolume(this.isMuted ? 0 : this.getActualMusicVolume())
         }
     }
 

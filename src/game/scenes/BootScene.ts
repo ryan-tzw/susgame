@@ -1,4 +1,5 @@
 import Phaser from 'phaser'
+import { AudioManager } from '../managers/AudioManager'
 
 /**
  * Boot scene - loads initial assets before showing main menu
@@ -39,8 +40,9 @@ export class BootScene extends Phaser.Scene {
     }
 
     create(): void {
-        // Start background music that will persist across all scenes
-        this.sound.add('game_music', { loop: true, volume: 0.5 }).play()
+        // Initialize global AudioManager and start background music
+        const audioManager = AudioManager.getInstance(this)
+        audioManager.playMusic('game_music')
 
         // Start the main menu
         this.scene.start('MainMenuScene')
