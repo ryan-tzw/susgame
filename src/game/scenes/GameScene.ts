@@ -10,6 +10,7 @@ import { UIManager } from '../managers/UIManager'
 import { GameStateManager } from '../managers/GameStateManager'
 import { GameConstants } from '../config/GameConstants'
 import { SceneTransitions } from '../utils/SceneTransitions'
+import { AudioManager } from '../managers/AudioManager'
 
 export class GameScene extends Phaser.Scene {
     private player!: Player
@@ -25,6 +26,7 @@ export class GameScene extends Phaser.Scene {
     private inputManager!: InputManager
     private uiManager!: UIManager
     private stateManager!: GameStateManager
+    private audioManager!: AudioManager
 
     constructor() {
         super({ key: 'GameScene' })
@@ -33,6 +35,9 @@ export class GameScene extends Phaser.Scene {
     create(): void {
         // Initialize game state manager
         this.stateManager = new GameStateManager()
+
+        // Initialize audio manager (music already playing from BootScene)
+        this.audioManager = new AudioManager(this)
 
         // Get trash assets from registry (loaded in PreloadScene)
         const trashAssets = this.registry.get('trashAssets') || []
@@ -219,6 +224,9 @@ export class GameScene extends Phaser.Scene {
                     bin.drainItem()
                     this.drainTimer = 0
 
+                    // Play deposit sound
+                    this.audioManager.playCorrectDeposit()
+
                     // Add score for draining
                     this.uiManager.addScore(GameConstants.SCORE.BIN_DRAIN)
 
@@ -292,6 +300,9 @@ export class GameScene extends Phaser.Scene {
             // Correct trash! Add to bin
             const added = this.carriedBin.addItem()
             if (added) {
+                // Play pickup sound
+                this.audioManager.playTrashPickup()
+
                 // Store trash position before destroying
                 const trashX = trash.x
                 const trashY = trash.y
@@ -316,6 +327,10 @@ export class GameScene extends Phaser.Scene {
             trash.collect()
             this.spawnManager.removeTrash(trash)
             this.nearbyTrash = null
+
+            // Play damage sound
+            this.audioManager.playPlayerDamage()
+
             this.player.takeDamage(1)
 
             // Show damage popup above player
@@ -338,6 +353,9 @@ export class GameScene extends Phaser.Scene {
     private handleGameOver(): void {
         // Only show game over if we successfully transition to that state
         if (this.stateManager.setGameOver()) {
+            // Play game over sound
+            this.audioManager.playGameOver()
+
             // Disable player controls
             this.player.setControlsEnabled(false)
 
@@ -361,6 +379,9 @@ export class GameScene extends Phaser.Scene {
     private handleWin(): void {
         // Only show win if we successfully transition to that state
         if (this.stateManager.setWin()) {
+            // Play victory sound
+            this.audioManager.playVictory()
+
             // Disable player controls
             this.player.setControlsEnabled(false)
 

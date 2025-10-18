@@ -1,15 +1,20 @@
 import Phaser from 'phaser'
 import { SceneTransitions } from '../utils/SceneTransitions'
+import { AudioManager } from '../managers/AudioManager'
 
 /**
  * Main menu scene with title and play button
  */
 export class MainMenuScene extends Phaser.Scene {
+    private audioManager!: AudioManager
+
     constructor() {
         super({ key: 'MainMenuScene' })
     }
 
     create(): void {
+        // Initialize audio manager (music already playing from BootScene)
+        this.audioManager = new AudioManager(this)
         const centerX = this.cameras.main.width / 2
         const centerY = this.cameras.main.height / 2
         const width = this.cameras.main.width
@@ -127,6 +132,7 @@ export class MainMenuScene extends Phaser.Scene {
 
         // Play button hover effect
         playButton.on('pointerover', () => {
+            this.audioManager.playButtonHover()
             playButtonBg.clear()
             playButtonBg.fillStyle(0x2ecc71, 1)
             playButtonBg.fillRoundedRect(
@@ -158,6 +164,7 @@ export class MainMenuScene extends Phaser.Scene {
 
         // Play button click
         playButton.on('pointerdown', () => {
+            this.audioManager.playButtonClick()
             playButtonBg.setScale(0.95)
             playButtonText.setScale(0.95)
         })

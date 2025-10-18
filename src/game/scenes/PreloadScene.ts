@@ -45,6 +45,9 @@ export class PreloadScene extends Phaser.Scene {
             'assets/sprites/background/spritesheet.png'
         )
         this.load.tilemapTiledJSON('map', 'assets/sprites/background/map.tmj')
+
+        // Load audio files
+        this.loadAudio()
     }
 
     create(): void {
@@ -90,5 +93,22 @@ export class PreloadScene extends Phaser.Scene {
 
         // Load all trash sprites
         TrashLoader.loadTrashSprites(this, this.trashAssets)
+    }
+
+    private loadAudio(): void {
+        // Note: game_music is already loaded in BootScene and playing
+
+        // Load sound effects
+        this.load.audio('trash_pickup', 'assets/audio/sfx/trash_pickup.mp3')
+        this.load.audio(
+            'correct_deposit',
+            'assets/audio/sfx/correct_deposit.mp3'
+        )
+        this.load.audio('wrong_deposit', 'assets/audio/sfx/wrong_deposit.mp3')
+        this.load.audio('player_damage', 'assets/audio/sfx/player_damage.mp3')
+        this.load.audio('button_hover', 'assets/audio/sfx/button_hover.mp3')
+        this.load.audio('button_click', 'assets/audio/sfx/button_click.mp3')
+        this.load.audio('victory', 'assets/audio/sfx/victory.mp3')
+        this.load.audio('game_over', 'assets/audio/sfx/game_over.mp3')
     }
 }
