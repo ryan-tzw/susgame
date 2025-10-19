@@ -29,17 +29,12 @@ export class BootScene extends Phaser.Scene {
         this.load.audio('game_music', 'assets/audio/music/game_music.wav')
 
         // Load UI sound effects
-        this.load.audio('button_hover', 'assets/audio/sfx/button_hover.mp3')
-        this.load.audio('button_click', 'assets/audio/sfx/button_click.mp3')
+        this.load.audio('button_hover', 'assets/audio/sfx/button_hover.ogg')
+        this.load.audio('button_click', 'assets/audio/sfx/button_click.ogg')
 
         // Load game sound effects
-        this.load.audio('trash_pickup', 'assets/audio/sfx/trash_pickup.mp3')
-        this.load.audio(
-            'correct_deposit',
-            'assets/audio/sfx/correct_deposit.mp3'
-        )
-        this.load.audio('wrong_deposit', 'assets/audio/sfx/wrong_deposit.mp3')
-        this.load.audio('player_damage', 'assets/audio/sfx/player_damage.mp3')
+        this.load.audio('trash_pickup', 'assets/audio/sfx/trash_pickup.ogg')
+        this.load.audio('player_damage', 'assets/audio/sfx/player_damage.ogg')
         this.load.audio('victory', 'assets/audio/sfx/victory.mp3')
         this.load.audio('game_over', 'assets/audio/sfx/game_over.mp3')
 

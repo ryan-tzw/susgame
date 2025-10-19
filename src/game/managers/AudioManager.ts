@@ -10,7 +10,7 @@ export class AudioManager {
     private music: Phaser.Sound.BaseSound | null = null
 
     // SFX settings
-    private sfxVolume = 0.5
+    private sfxVolume = 0.3
 
     // Music volume settings - two-tier system
     private baseMusicVolume = 0.15 // Internal base level (prevents ear-blasting)
@@ -118,84 +118,80 @@ export class AudioManager {
     playSfx(key: string, volume?: number): void {
         if (this.isMuted) return
 
-        // TODO: Temporarily disabled - audio files not added yet
-        console.log(
-            `[SFX] Would play: ${key} at volume ${volume ?? this.sfxVolume}`
-        )
+        const sfx = this.scene.sound.add(key, {
+            volume: volume ?? this.sfxVolume,
+        })
+        sfx.play()
 
-        // const sfx = this.scene.sound.add(key, {
-        //     volume: volume ?? this.sfxVolume,
-        // })
-        // sfx.play()
-
-        // // Auto-destroy after playing to prevent memory leaks
-        // sfx.once('complete', () => {
-        //     sfx.destroy()
-        // })
+        // Auto-destroy after playing to prevent memory leaks
+        sfx.once('complete', () => {
+            sfx.destroy()
+        })
     }
 
     /**
-     * Play trash pickup sound
+     * Play trash pickup sound with random pitch variation
      */
     playTrashPickup(): void {
-        console.log('[SFX] Trash pickup sound')
-        // this.playSfx('trash_pickup')
-    }
+        if (this.isMuted) return
 
-    /**
-     * Play correct bin deposit sound
-     */
-    playCorrectDeposit(): void {
-        console.log('[SFX] Correct deposit sound')
-        // this.playSfx('correct_deposit')
-    }
+        const sfx = this.scene.sound.add('trash_pickup', {
+            volume: this.sfxVolume,
+        })
 
-    /**
-     * Play wrong bin deposit sound
-     */
-    playWrongDeposit(): void {
-        console.log('[SFX] Wrong deposit sound')
-        // this.playSfx('wrong_deposit')
+        // Random pitch variation: -200 to +200 cents (2 semitones up/down)
+        // detune is in cents: 100 cents = 1 semitone
+        const randomDetune = Phaser.Math.Between(-200, 200)
+
+        // Cast to access detune property
+        const sound = sfx as
+            | Phaser.Sound.WebAudioSound
+            | Phaser.Sound.HTML5AudioSound
+        if ('setDetune' in sound) {
+            sound.setDetune(randomDetune)
+        }
+
+        sfx.play()
+
+        // Auto-destroy after playing
+        sfx.once('complete', () => {
+            sfx.destroy()
+        })
     }
 
     /**
      * Play player damage sound
      */
     playPlayerDamage(): void {
-        console.log('[SFX] Player damage sound')
-        // this.playSfx('player_damage')
+        this.playSfx('player_damage')
     }
 
     /**
      * Play button hover sound
      */
     playButtonHover(): void {
-        console.log('[SFX] Button hover sound')
-        // this.playSfx('button_hover', 0.3)
+        this.playSfx('button_hover', 0.3)
     }
 
     /**
      * Play button click sound
      */
     playButtonClick(): void {
-        console.log('[SFX] Button click sound')
-        // this.playSfx('button_click', 0.5)
+        this.playSfx('button_click', 0.5)
     }
 
     /**
      * Play victory sound
      */
     playVictory(): void {
-        console.log('[SFX] Victory sound')
-        // this.playSfx('victory', 0.8)
+        this.playSfx('victory', 0.8)
     }
 
     /**
      * Play game over sound
      */
     playGameOver(): void {
-        console.log('[SFX] Game over sound')
-        // this.playSfx('game_over', 0.8)
+        this.playSfx('game_over', 0.8)
     }
 
     /**

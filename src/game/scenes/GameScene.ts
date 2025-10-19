@@ -221,9 +221,6 @@ export class GameScene extends Phaser.Scene {
                     bin.drainItem()
                     this.drainTimer = 0
 
-                    // Play deposit sound
-                    this.audioManager.playCorrectDeposit()
-
                     // Add score for draining
                     this.uiManager.addScore(GameConstants.SCORE.BIN_DRAIN)
 
