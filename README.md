@@ -12,7 +12,8 @@ Collect trash with the correct bins, deposit them at the appropriate facilities,
 
 -   **Arrow Keys** / **WASD**: Move
 -   **Shift**: Sprint
--   **Space**: Pick up bins / Collect trash
+-   **Space**: Pick up bins
+-   **E**: Pick up trash (while holding a bin)
 
 **Bin Types:**
 
